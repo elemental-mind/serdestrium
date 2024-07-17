@@ -1,4 +1,4 @@
-import { encodeClass } from "./identification/classEncoder.ts";
+import { generateClassIdentifier } from "./typeIdentification/classEncoder.ts";
 import { NativeType, TypedElementTypes, SerializationSymbols, InternalConstant, Constants, SerializedType } from "./serium.ts";
 
 export abstract class Serializer<T extends string | ArrayBufferView>
@@ -172,16 +172,18 @@ export abstract class Serializer<T extends string | ArrayBufferView>
 
         if (!classID)
         {
-            classID = encodeClass(prototype.constructor);
+            classID = generateClassIdentifier(prototype.constructor);
             this.knownClasses.set(prototype.constructor, classID);
         }
 
         const serializationInfo = new SerializedType(classID);
 
+        //We need to discern here as classes with hooks would alter their own representation
+        //We therefore need to feed those classes a fresh data object that they can modify without modifying their own properties
         if (instance.onSerialization)
         {
             serializationInfo.data = {};
-            
+
             instance.onSerialization(serializationInfo.data);
         }
         else if (instance.onPostSerialization)
@@ -195,6 +197,7 @@ export abstract class Serializer<T extends string | ArrayBufferView>
         }
         else
         {
+            //In this case we have no hooks and thus no need for a shadow copy of the class.
             serializationInfo.data = instance;
         }
 
