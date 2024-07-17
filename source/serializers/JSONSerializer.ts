@@ -1,5 +1,5 @@
 import { Serializer } from "../serializer.ts";
-import { InternalConstant, InternalConstants } from "../serium.ts";
+import { InternalConstant, InternalConstants, SerializationSymbols, SerializedType } from "../serium.ts";
 
 export class JSONSerializer extends Serializer<string>
 {
@@ -15,6 +15,40 @@ export class JSONSerializer extends Serializer<string>
     )
     {
         super(knownClasses, knownSymbols, knownObjects);
+    }
+
+    protected *emitInstance(instanceData: SerializedType)
+    {
+        yield "{";
+
+        this.increaseIndentation();
+
+        if (this.whitespace)
+            yield "\n" + this.indentString;
+
+        yield `"[Type]":`;
+
+        if (this.whitespace)
+            yield " ";
+
+        yield `"${instanceData.type}"`;
+
+        const dataObj = instanceData.data;
+
+        for (const key of Reflect.ownKeys(dataObj))
+        {
+            if (key === "constructor")
+                continue;
+
+            yield* this.emitKVPair(true, key, dataObj[key]);
+        }
+
+        this.decreaseIndentation();
+
+        if (this.whitespace)
+            yield "\n" + this.indentString;
+
+        yield "}";
     }
 
     protected *emitObject(object: any)
@@ -33,29 +67,7 @@ export class JSONSerializer extends Serializer<string>
 
         for (const key of Reflect.ownKeys(object))
         {
-            if (key === "constructor")
-                continue;
-
-            const element = object[key];
-
-            if (nextKVPairNeedsComma)
-                yield ",";
-
-            if (this.whitespace)
-                yield "\n" + this.indentString;
-
-            if (typeof key === "string")
-                yield JSON.stringify(this.escapedString(key));
-            else
-                yield this.emitSymbol(key);
-
-            yield ":";
-
-            if (this.whitespace)
-                yield " ";
-
-            yield* this.stream(element);
-
+            yield* this.emitKVPair(nextKVPairNeedsComma, key, object[key]);
             nextKVPairNeedsComma = true;
         }
 
@@ -65,6 +77,27 @@ export class JSONSerializer extends Serializer<string>
             yield "\n" + this.indentString;
 
         yield "}";
+    }
+
+    private *emitKVPair(prependComma: boolean, key: symbol | string, value: any)
+    {
+        if (prependComma)
+            yield ",";
+
+        if (this.whitespace)
+            yield "\n" + this.indentString;
+
+        if (typeof key === "string")
+            yield JSON.stringify(this.escapedString(key));
+        else
+            yield this.emitSymbol(key);
+
+        yield ":";
+
+        if (this.whitespace)
+            yield " ";
+
+        yield* this.stream(value);
     }
 
     protected *emitArray(array: any)
@@ -190,7 +223,7 @@ export class JSONSerializer extends Serializer<string>
 
     private escapedString(string)
     {
-        if ((string.startsWith("[") || string.startsWith("#")) && string.match(/#*\[(ref: |sym: |const: )/))
+        if ((string.startsWith("[") || string.startsWith("#")) && string.match(/#*\[(ref: |sym: |const: |Type\])/))
             return `#${string}`;
         else
             return string;

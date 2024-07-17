@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import { JSONSerializer } from "./JSONSerializer.ts";
+import { CustomizedTestClass, SimpleTestClass } from "../../test/serializationTestClasses.ts";
 
 export class StringTests
 {
@@ -89,17 +90,17 @@ export class ObjectTests
     emitsObjectFormatted()
     {
         const serializer = new JSONSerializer(new Map(), new Map(), new Map(), { indentation: "    " });
-        
+
         const obj = {
             numberKey: 123,
             stringKey: "Some string",
             boolKey: true,
             undef: undefined
         };
-        
+
         const result = serializer.serialize(obj);
-        assert.strictEqual(result, 
-`{
+        assert.strictEqual(result,
+            `{
     "numberKey": 123,
     "stringKey": "Some string",
     "boolKey": true,
@@ -123,5 +124,19 @@ export class ObjectTests
 
 export class InstanceTests
 {
+    emitsSimpleClassInstance()
+    {
+        const serializer = new JSONSerializer(new Map([[SimpleTestClass, "SimpleClass"]]), new Map());
+        const instance = new SimpleTestClass();
+        const result = serializer.serialize(instance);
+        assert.strictEqual(result, `{"[Type]":"SimpleClass","name":"","age":35,"isActive":false,"preferences":{"mail":"john.doe@example.com","marketing":false}}`);
+    }
 
+    emitsCustomizedClassInstance()
+    {
+        const serializer = new JSONSerializer(new Map([[CustomizedTestClass, "CustomizedClass"]]), new Map());
+        const instance = new CustomizedTestClass();
+        const result = serializer.serialize(instance);
+        assert.strictEqual(result, `{"[Type]":"CustomizedClass","name":"","age":35,"preferences":{"mail":"john.doe@example.com","marketing":false},"isActive":false}`);
+    }
 }

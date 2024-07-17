@@ -1,9 +1,5 @@
-import { StringTests } from "../source/serializers/JSONSerializer.spec.ts";
-import { NumberTests } from "../source/serializers/JSONSerializer.spec.ts";
-import { SymbolTests } from "../source/serializers/JSONSerializer.spec.ts";
-import { BinaryTests } from "../source/serializers/JSONSerializer.spec.ts";
-import { ObjectTests } from "../source/serializers/JSONSerializer.spec.ts";
-import { InstanceTests } from "../source/serializers/JSONSerializer.spec.ts";
+import { BinaryTests, InstanceTests, NumberTests, ObjectTests, StringTests, SymbolTests } from "../source/serializers/JSONSerializer.spec.ts";
+import { EncodingToolsTests, FingerPrintingToolsTests, ClassIdentifierTests, HashToolsTests } from "../source/typeIdentification/classEncoder.spec.ts";
 
 const stringTests = new StringTests();
 stringTests.emitsSimpleString();
@@ -27,5 +23,24 @@ objectTests.emitsObjectFormatted();
 objectTests.emitsObjectsWithKnownSymbols();
 
 const instanceTests = new InstanceTests();
+instanceTests.emitsSimpleClassInstance();
+instanceTests.emitsCustomizedClassInstance();
+
+const fingerPrintingToolsTests = new FingerPrintingToolsTests();
+fingerPrintingToolsTests.fingerPrintsSimpleClass();
+fingerPrintingToolsTests.fingerPrintsInheritedClass();
+
+const encodingToolsTests = new EncodingToolsTests();
+encodingToolsTests.encodesNumberWithAlphaNumNonAmbiguous();
+encodingToolsTests.encodesNumberWithBase64();
+encodingToolsTests.convertsDecimalToBase();
+
+const hashToolsTests = new HashToolsTests();
+hashToolsTests.generatesQuickHash();
+hashToolsTests.throwsErrorForTooManyBits();
+
+const generateClassIdentifierTests = new ClassIdentifierTests();
+generateClassIdentifierTests.generatesUniqueIdentifier();
+generateClassIdentifierTests.generatesDifferentIdentifiersForDifferentClasses();
 
 console.log("All tests passed!");
