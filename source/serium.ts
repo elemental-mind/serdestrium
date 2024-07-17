@@ -57,6 +57,7 @@ export class InternalConstant
         public value: InternalConstants
     ) { };
 }
+
 export const Constants =
     {
         Undefined: new InternalConstant(InternalConstants.Undefined),
@@ -64,20 +65,14 @@ export const Constants =
         Infinity: new InternalConstant(InternalConstants.Infinity)
     } as const;
 
-export class SerializedNativeType
+export class SerializedType implements Record<string | symbol, any>
 {
-    public [SerializationSymbols.InternalType]: NativeType;
-
+    public data!: any;
     constructor(
-        type: NativeType,
-        public data: any
+        public type: string,
+        data?: any
     )
     {
-        this[SerializationSymbols.InternalType] = type;
+        this.data = data;
     };
-}
-
-export class SerializedCustomType implements Record<string | symbol, any>
-{
-    public [SerializationSymbols.CustomType]: string;
 }

@@ -1,5 +1,5 @@
-import { encodeClass } from "./classEncoder.ts";
-import { NativeType, TypedElementTypes, SerializationSymbols, SerializedNativeType, InternalConstant, InternalConstants, Constants, SerializedCustomType } from "./serium.ts";
+import { encodeClass } from "./identification/classEncoder.ts";
+import { NativeType, TypedElementTypes, SerializationSymbols, InternalConstant, Constants, SerializedType } from "./serium.ts";
 
 export abstract class Serializer<T extends string | ArrayBufferView>
 {
@@ -13,7 +13,8 @@ export abstract class Serializer<T extends string | ArrayBufferView>
         this.knownSymbols.set(SerializationSymbols.InternalType, "InternalType");
     }
 
-    protected abstract emitObject(object: null | object | SerializedNativeType): Generator<T>;
+    protected abstract emitInstance(instanceData: SerializedType): Generator<T>;
+    protected abstract emitObject(object: null | object): Generator<T>;
     protected abstract emitArray(array: Array<any>): Generator<T>;
     protected abstract emitBinary(blob: ArrayBuffer): Generator<T>;
     protected abstract emitReference(identifier: number): T;
@@ -37,9 +38,10 @@ export abstract class Serializer<T extends string | ArrayBufferView>
             case "object":
                 switch (Object.getPrototypeOf(preformatted))
                 {
+                    case SerializedType.prototype:
+                        yield* this.emitInstance(preformatted);
+                        break;
                     case Object.prototype:
-                    case SerializedNativeType.prototype:
-                    case SerializedCustomType.prototype:
                         yield* this.emitObject(preformatted);
                         break;
                     case Array.prototype:
@@ -124,7 +126,7 @@ export abstract class Serializer<T extends string | ArrayBufferView>
         }
     }
 
-    private preformatObject(object: any)
+    protected preformatObject(object: any)
     {
         if (object === null)
             return object;
@@ -162,11 +164,9 @@ export abstract class Serializer<T extends string | ArrayBufferView>
         }
     }
 
-    private preformatInstance(instance: any)
+    protected preformatInstance(instance: any)
     {
         const prototype = Object.getPrototypeOf(instance);
-
-        const data = Object.create(SerializedCustomType.prototype) as SerializedCustomType;
 
         let classID = this.knownClasses.get(prototype.constructor);
 
@@ -176,25 +176,32 @@ export abstract class Serializer<T extends string | ArrayBufferView>
             this.knownClasses.set(prototype.constructor, classID);
         }
 
-        data[SerializationSymbols.CustomType] = classID;
+        const serializationInfo = new SerializedType(classID);
 
         if (instance.onSerialization)
         {
-            instance.onSerialization(data);
+            serializationInfo.data = {};
+            
+            instance.onSerialization(serializationInfo.data);
+        }
+        else if (instance.onPostSerialization)
+        {
+            serializationInfo.data = {};
+
+            for (const key of Reflect.ownKeys(instance))
+                serializationInfo.data[key] = instance[key];
+
+            instance.onPostSerialization(serializationInfo.data);
         }
         else
         {
-            for (const key in instance)
-                data[key] = this.preformat(instance[key]);
-
-            if (instance.onPostDeserialization)
-                instance.onPostDeserialization(data);
+            serializationInfo.data = instance;
         }
 
-        return data;
+        return serializationInfo;
     }
 
-    private preformatNumber(number: number)
+    protected preformatNumber(number: number)
     {
         if (Number.isNaN(number))
             return Constants.NaN;
@@ -205,17 +212,17 @@ export abstract class Serializer<T extends string | ArrayBufferView>
         return number;
     }
 
-    private preformatBigInt(int: BigInt)
+    protected preformatBigInt(int: BigInt)
     {
-        return new SerializedNativeType(NativeType.BigInt, int.toString());
+        return new SerializedType("Native.BigInt", int.toString());
     }
 
-    private preformatTypedArray(typedArray: DataView)
+    protected preformatTypedArray(typedArray: DataView)
     {
         //This maps "Int8Array" to "Int8" which can then be looked up in our SerializationConstants
         const elementTypeName = Object.getPrototypeOf(typedArray).constructor.name.split("Array")[0];
 
-        return new SerializedNativeType(NativeType.TypedArray, {
+        return new SerializedType("Native.TypedArray", {
             type: TypedElementTypes[elementTypeName],
             buffer: typedArray.buffer,
             offset: typedArray.byteOffset,
@@ -223,41 +230,41 @@ export abstract class Serializer<T extends string | ArrayBufferView>
         });
     }
 
-    private preformatDataView(view: DataView)
+    protected preformatDataView(view: DataView)
     {
-        return new SerializedNativeType(NativeType.DataView, {
+        return new SerializedType("Native.DataView", {
             buffer: view.buffer,
             offset: view.byteOffset,
             length: view.byteLength
         });
     }
 
-    private preformatMap(map: Map<any, any>)
+    protected preformatMap(map: Map<any, any>)
     {
-        return new SerializedNativeType(NativeType.Map, [...map]);
+        return new SerializedType("Native.Map", [...map]);
     }
 
-    private preformatSet(set: Set<any>)
+    protected preformatSet(set: Set<any>)
     {
-        return new SerializedNativeType(NativeType.Set, [...set]);
+        return new SerializedType("Native.Set", [...set]);
     }
 
-    private preformatDate(date: Date)
+    protected preformatDate(date: Date)
     {
-        return new SerializedNativeType(NativeType.Date, date.getTime());
+        return new SerializedType("Native.Date", date.getTime());
     }
 
-    private preformatError(error: Error)
+    protected preformatError(error: Error)
     {
-        return new SerializedNativeType(NativeType.Error, {
+        return new SerializedType("Native.Error", {
             name: error.name,
             message: error.message,
             stack: error.stack
         });
     }
 
-    private preformatRegEx(regEx: RegExp)
+    protected preformatRegEx(regEx: RegExp)
     {
-        return new SerializedNativeType(NativeType.RegEx, regEx.toString());
+        return new SerializedType("Native.RegExp", regEx.toString());
     }
 }
