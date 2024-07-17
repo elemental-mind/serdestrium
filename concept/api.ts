@@ -9,5 +9,5 @@ export interface ICustomSerialization
 
 export interface ISerializationBoundary
 {
-    
+    serialize(object: any, depth: number, path: string[]) : boolean;
 }
