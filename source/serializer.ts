@@ -27,9 +27,15 @@ export abstract class Serializer<T extends string | ArrayBufferView>
     *stream(object: any): Generator<T>
     {
         if (this.knownObjects.has(object))
-            return this.emitReference(this.knownObjects.get(object)!);
-        else if (typeof object === "object" && object !== null)
+        {
+            yield this.emitReference(this.knownObjects.get(object)!);
+            return;
+        }
+
+        if (typeof object === "object" && object !== null)
+        {
             this.knownObjects.set(object, this.knownObjects.size);
+        }
 
         const preformatted = this.preformat(object);
 

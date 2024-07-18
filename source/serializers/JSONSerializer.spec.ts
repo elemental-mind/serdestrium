@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { JSONSerializer } from "./JSONSerializer.ts";
-import { CustomizedTestClass, SimpleTestClass } from "../../test/serializationTestClasses.ts";
+import { CustomizedTestClass, SimpleTestClass, TestRing, TestRingElement } from "../../test/serializationTestClasses.ts";
 
 export class StringTests
 {
@@ -138,5 +138,55 @@ export class InstanceTests
         const instance = new CustomizedTestClass();
         const result = serializer.serialize(instance);
         assert.strictEqual(result, `{"[Type]":"CustomizedClass","name":"","age":35,"preferences":{"mail":"john.doe@example.com","marketing":false},"isActive":false}`);
+    }
+
+    emitsCircularInstances()
+    {
+        const serializer = new JSONSerializer(new Map([[TestRing as any, "TestRing"], [TestRingElement, "TestRingElement"]]), new Map(), new Map(), { indentation: "    " });
+        const ring = new TestRing<number>();
+        ring.add(1);
+        ring.add(2);
+        ring.add(3);
+
+        const result = serializer.serialize(ring);
+        assert.strictEqual(result,
+            `{
+    "[Type]": "TestRing",
+    "entry": {
+        "[Type]": "TestRingElement",
+        "value": 1,
+        "next": {
+            "[Type]": "TestRingElement",
+            "value": 2,
+            "next": {
+                "[Type]": "TestRingElement",
+                "value": 3,
+                "next": "[ref: 1]",
+                "previous": "[ref: 2]"
+            },
+            "previous": "[ref: 1]"
+        },
+        "previous": "[ref: 3]"
+    }
+}`);
+    }
+
+    emitsSelfReferencingInstances()
+    {
+        const serializer = new JSONSerializer(new Map([[TestRing as any, "TestRing"], [TestRingElement, "TestRingElement"]]), new Map(), new Map(), { indentation: "    " });
+        const ring = new TestRing<number>();
+        ring.add(1);
+        
+        const result = serializer.serialize(ring);
+        assert.strictEqual(result,
+`{
+    "[Type]": "TestRing",
+    "entry": {
+        "[Type]": "TestRingElement",
+        "value": 1,
+        "next": "[ref: 1]
+        "previous": "[ref: 1]"
+    }
+}`);
     }
 }

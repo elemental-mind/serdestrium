@@ -25,6 +25,8 @@ objectTests.emitsObjectsWithKnownSymbols();
 const instanceTests = new InstanceTests();
 instanceTests.emitsSimpleClassInstance();
 instanceTests.emitsCustomizedClassInstance();
+instanceTests.emitsCircularInstances();
+instanceTests.emitsSelfReferencingInstances();
 
 const fingerPrintingToolsTests = new FingerPrintingToolsTests();
 fingerPrintingToolsTests.fingerPrintsSimpleClass();

@@ -78,15 +78,18 @@ export class TestRing<T>
         {
             newElement.next = newElement;
             newElement.previous = newElement;
+            this.entry = newElement;
         }
         else
         {
-            newElement.next = this.entry.next;
-            newElement.previous = this.entry;
-            this.entry.next!.previous = newElement;
-            this.entry.next = newElement;
+            const leftElement = this.entry.previous!;
+            const rightElement = this.entry;
+            
+            newElement.previous = leftElement;
+            leftElement.next = newElement;
+            newElement.next = rightElement;
+            rightElement.previous = newElement;
         }
-        this.entry = newElement;
     }
 
     rotateLeft()
@@ -110,7 +113,7 @@ export class TestRingElement<T>
 {
     constructor(
         public value: T,
+        public next: TestRingElement<T> | null = null,
         public previous: TestRingElement<T> | null = null,
-        public next: TestRingElement<T> | null = null
     ) { }
 }
