@@ -1,5 +1,8 @@
 import assert from "node:assert";
-import { generateClassIdentifier, EncodingTools, HashTools, FingerPrintingTools } from "./classEncoder.ts";
+import { FingerPrintingTools } from "./fingerprintingTools.ts";
+import { EncodingTools } from "./encodingTools.ts";
+import { HashTools } from "./hashTools.ts";
+
 
 export class FingerPrintingToolsTests
 {
@@ -63,7 +66,7 @@ export class ClassIdentifierTests
             testMethod() { }
         }
 
-        const identifier = generateClassIdentifier(TestClass);
+        const identifier = FingerPrintingTools.generateClassIdentifier(TestClass);
         assert.strictEqual(identifier.length, 6);
         assert.match(identifier, /^[ABCDEFGHJKLMNPQRSTUVWXYZabcdefghkmnpqrstuvwxyz23456789]{6}$/);
     }
@@ -80,8 +83,8 @@ export class ClassIdentifierTests
             method1() { }
         }
 
-        const identifier1 = generateClassIdentifier(TestClass1);
-        const identifier2 = generateClassIdentifier(TestClass2);
+        const identifier1 = FingerPrintingTools.generateClassIdentifier(TestClass1);
+        const identifier2 = FingerPrintingTools.generateClassIdentifier(TestClass2);
         assert.notStrictEqual(identifier1, identifier2);
     }
 }
