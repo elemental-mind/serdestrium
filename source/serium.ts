@@ -4,7 +4,7 @@ export interface ICustomSerialization
     onSerialization?(dataObject: any): void;
     onPostSerialization?(dataObject: any): void;
     onDeserialization?(dataObject: any): void | any;
-    onPostDeserialization?(dataObject: any): void | any;
+    onPostDeserialization?(): void | any;
 }
 
 export enum NativeType
@@ -42,28 +42,12 @@ export enum InternalConstants
     Undefined
 }
 
-const InternalTypeSym = Symbol("Internal Type");
-const CustomTypeSym = Symbol("Custom Type");
-
-export const SerializationSymbols =
-    {
-        InternalType: InternalTypeSym,
-        CustomType: CustomTypeSym,
-    } as const;
-
 export class InternalConstant
 {
     constructor(
         public value: InternalConstants
     ) { };
 }
-
-export const Constants =
-    {
-        Undefined: new InternalConstant(InternalConstants.Undefined),
-        NaN: new InternalConstant(InternalConstants.NaN),
-        Infinity: new InternalConstant(InternalConstants.Infinity)
-    } as const;
 
 export class SerializedType implements Record<string | symbol, any>
 {
@@ -76,3 +60,36 @@ export class SerializedType implements Record<string | symbol, any>
         this.data = data;
     };
 }
+
+export const Token = {
+    InstanceStart: Symbol("InstanceStart"),
+    InstanceEnd: Symbol("InstanceEnd"),
+    ObjectStart: Symbol("ObjectStart"),
+    ObjectEnd: Symbol("ObjectEnd"),
+    ArrayStart: Symbol("ArrayStart"),
+    ArrayEnd: Symbol("ArrayEnd"),
+    BinaryStart: Symbol("BinaryStart"),
+    BinaryEnd: Symbol("BinaryEnd"),
+    Reference: Symbol("Reference"),
+    Delimiter: Symbol("Delimiter"),
+    String: Symbol("String"),
+    Number: Symbol("Number"),
+    Boolean: Symbol("Boolean"),
+    Constant: Symbol("Constant"),
+    Symbol: Symbol("Symbol"),
+    StreamStart: Symbol("StreamStart"),
+    StreamEnd: Symbol("StreamEnd"),
+} as const;
+
+export const SerializationSymbols = {
+    InternalType: Symbol("Internal Type"),
+    CustomType: Symbol("Custom Type")
+} as const;
+
+export const Constants = {
+    Undefined: new InternalConstant(InternalConstants.Undefined),
+    NaN: new InternalConstant(InternalConstants.NaN),
+    Infinity: new InternalConstant(InternalConstants.Infinity)
+} as const;
+
+export type TokenSymbol = typeof Token[keyof typeof Token];

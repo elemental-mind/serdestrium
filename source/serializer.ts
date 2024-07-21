@@ -1,5 +1,5 @@
-import { generateClassIdentifier } from "./typeIdentification/classEncoder.ts";
-import { NativeType, TypedElementTypes, SerializationSymbols, InternalConstant, Constants, SerializedType } from "./serium.ts";
+import { FingerPrintingTools } from "./tools/fingerprintingTools.js";
+import { NativeType, TypedElementTypes, SerializationSymbols, InternalConstant, Constants, SerializedType } from "./serium.js";
 
 export abstract class Serializer<T extends string | ArrayBufferView>
 {
@@ -116,6 +116,7 @@ export abstract class Serializer<T extends string | ArrayBufferView>
         {
             case "string":
             case "boolean":
+            case "symbol":
                 return element;
             case "number":
                 return this.preformatNumber(element);
@@ -125,48 +126,42 @@ export abstract class Serializer<T extends string | ArrayBufferView>
                 return Constants.Undefined;
             case "bigint":
                 return this.preformatBigInt(element);
-            case "symbol":
-                return element;
             case "object":
-                return this.preformatObject(element);
-        }
-    }
+                const object = element;
+                if (object === null)
+                    return object;
 
-    protected preformatObject(object: any)
-    {
-        if (object === null)
-            return object;
-
-        switch (Object.getPrototypeOf(object))
-        {
-            case null:
-            case Object.prototype:
-            case Array.prototype:
-                return object;
-            case Int8Array.prototype:
-            case Uint8Array.prototype:
-            case Uint8ClampedArray.prototype:
-            case Int16Array.prototype:
-            case Uint16Array.prototype:
-            case Int32Array.prototype:
-            case Uint32Array.prototype:
-            case Float32Array.prototype:
-            case Float64Array.prototype:
-                return this.preformatTypedArray(object);
-            case DataView.prototype:
-                return this.preformatDataView(object);
-            case Map.prototype:
-                return this.preformatMap(object);
-            case Set.prototype:
-                return this.preformatSet(object);
-            case Error.prototype:
-                return this.preformatError(object);
-            case RegExp.prototype:
-                return this.preformatRegEx(object);
-            case Date.prototype:
-                return this.preformatDate(object);
-            default:
-                return this.preformatInstance(object);
+                switch (Object.getPrototypeOf(object))
+                {
+                    case null:
+                    case Object.prototype:
+                    case Array.prototype:
+                        return object;
+                    case Int8Array.prototype:
+                    case Uint8Array.prototype:
+                    case Uint8ClampedArray.prototype:
+                    case Int16Array.prototype:
+                    case Uint16Array.prototype:
+                    case Int32Array.prototype:
+                    case Uint32Array.prototype:
+                    case Float32Array.prototype:
+                    case Float64Array.prototype:
+                        return this.preformatTypedArray(object);
+                    case DataView.prototype:
+                        return this.preformatDataView(object);
+                    case Map.prototype:
+                        return this.preformatMap(object);
+                    case Set.prototype:
+                        return this.preformatSet(object);
+                    case Error.prototype:
+                        return this.preformatError(object);
+                    case RegExp.prototype:
+                        return this.preformatRegEx(object);
+                    case Date.prototype:
+                        return this.preformatDate(object);
+                    default:
+                        return this.preformatInstance(object);
+                }
         }
     }
 
@@ -178,7 +173,7 @@ export abstract class Serializer<T extends string | ArrayBufferView>
 
         if (!classID)
         {
-            classID = generateClassIdentifier(prototype.constructor);
+            classID = FingerPrintingTools.generateClassIdentifier(prototype.constructor);
             this.knownClasses.set(prototype.constructor, classID);
         }
 
@@ -232,10 +227,10 @@ export abstract class Serializer<T extends string | ArrayBufferView>
         const elementTypeName = Object.getPrototypeOf(typedArray).constructor.name.split("Array")[0];
 
         return new SerializedType("Native.TypedArray", {
-            type: TypedElementTypes[elementTypeName],
-            buffer: typedArray.buffer,
+            type: elementTypeName,
             offset: typedArray.byteOffset,
-            length: typedArray.byteLength
+            length: typedArray.byteLength,
+            buffer: typedArray.buffer
         });
     }
 

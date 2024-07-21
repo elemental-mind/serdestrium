@@ -1,5 +1,5 @@
-import { EncodingTools } from "./encodingTools.ts";
-import { HashTools } from "./hashTools.ts";
+import { EncodingTools } from "./encodingTools.js";
+import { HashTools } from "./hashTools.js";
 
 export class FingerPrintingTools
 {

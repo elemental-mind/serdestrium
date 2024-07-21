@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { EncodingTools } from "./encodingTools.ts";
+import { EncodingTools } from "./encodingTools.js";
 
 export class EncodingToolsTests
 {

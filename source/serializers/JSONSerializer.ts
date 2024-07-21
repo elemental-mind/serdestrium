@@ -1,5 +1,5 @@
-import { Serializer } from "../serializer.ts";
-import { InternalConstant, InternalConstants, SerializationSymbols, SerializedType } from "../serium.ts";
+import { Serializer } from "../serializer.js";
+import { InternalConstant, InternalConstants, SerializedType } from "../serium.js";
 
 export class JSONSerializer extends Serializer<string>
 {
@@ -133,7 +133,7 @@ export class JSONSerializer extends Serializer<string>
     {
         //Inspired by https://gist.github.com/jonleighton/958841
         //This streams a base64 encoded string from an ArrayBuffer
-        yield `"`;
+        yield `"[bin]`;
 
         const bytes = new Uint8Array(blob);
         const byteLength = bytes.byteLength;
@@ -183,7 +183,7 @@ export class JSONSerializer extends Serializer<string>
             yield this.base64Encodings[a] + this.base64Encodings[b] + this.base64Encodings[c] + '=';
         }
 
-        return `"`;
+        yield `"`;
     }
 
     protected emitInternalConstant(constant: InternalConstant): string
@@ -221,9 +221,9 @@ export class JSONSerializer extends Serializer<string>
         return `"[sym: ${symbolName}]"`;
     }
 
-    private escapedString(string)
+    private escapedString(string: string)
     {
-        if ((string.startsWith("[") || string.startsWith("#")) && string.match(/#*\[(ref: |sym: |const: |Type\])/))
+        if ((string.startsWith("[") || string.startsWith("#")) && string.match(/#*\[(ref: |sym: |const: |bin\] |Type\])/))
             return `#${string}`;
         else
             return string;

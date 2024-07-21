@@ -1,6 +1,6 @@
 import assert from "node:assert";
-import { JSONSerializer } from "./JSONSerializer.ts";
-import { CustomizedTestClass, SimpleTestClass, TestRing, TestRingElement } from "../../test/serializationTestClasses.ts";
+import { JSONSerializer } from "./JSONSerializer.js";
+import { CustomizedTestClass, SimpleTestClass, TestRing, TestRingElement } from "../../test/serializationTestClasses.js";
 
 export class SerializeJSONStringTests
 {

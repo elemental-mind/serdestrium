@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { FingerPrintingTools } from "./fingerprintingTools.ts";
+import { FingerPrintingTools } from "./fingerprintingTools.js";
 
 export class FingerPrintingToolsTests
 {

@@ -61,9 +61,11 @@ export class CustomizedTestClass implements ICustomSerialization
         dataObject.isActive = this.#isActive;
     }
 
-    onPostDeserialization(dataObject: any)
+    onDeserialization(dataObject: any)
     {
         this.#isActive = dataObject.isActive;
+        delete dataObject.isActive;
+        Object.assign(this, dataObject);
     }
 }
 

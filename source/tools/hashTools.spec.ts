@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { HashTools } from "./hashTools.ts";
+import { HashTools } from "./hashTools.js";
 
 export class HashToolsTests
 {
