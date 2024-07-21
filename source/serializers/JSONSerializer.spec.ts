@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { JSONSerializer } from "./JSONSerializer.ts";
 import { CustomizedTestClass, SimpleTestClass, TestRing, TestRingElement } from "../../test/serializationTestClasses.ts";
 
-export class JSONStringTests
+export class SerializeJSONStringTests
 {
     emitsSimpleString()
     {
@@ -33,7 +33,7 @@ export class JSONStringTests
     }
 }
 
-export class JSONNumberTests
+export class SerializeJSONNumberTests
 {
     emitsSimpleNumber()
     {
@@ -57,7 +57,7 @@ export class JSONNumberTests
     }
 }
 
-export class JSONSymbolTests
+export class SerializeJSONSymbolTests
 {
     emitsSimpleSymbol()
     {
@@ -68,12 +68,12 @@ export class JSONSymbolTests
     }
 }
 
-export class JSONBinaryTests
+export class SerializeJSONBinaryTests
 {
 
 }
 
-export class JSONObjectTests
+export class SerializeJSONObjectTests
 {
     emitsObjectUnformatted()
     {
@@ -122,7 +122,7 @@ export class JSONObjectTests
     }
 }
 
-export class JSONInstanceTests
+export class SerializeJSONInstanceTests
 {
     emitsSimpleClassInstance()
     {
