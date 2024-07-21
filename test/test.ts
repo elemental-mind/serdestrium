@@ -1,28 +1,30 @@
-import { BinaryTests, InstanceTests, NumberTests, ObjectTests, StringTests, SymbolTests } from "../source/serializers/JSONSerializer.spec.ts";
-import { EncodingToolsTests, FingerPrintingToolsTests, ClassIdentifierTests, HashToolsTests } from "../source/typeIdentification/classEncoder.spec.ts";
+import { JSONBinaryTests, JSONInstanceTests, JSONNumberTests, JSONObjectTests, JSONStringTests, JSONSymbolTests } from "../source/serializers/JSONSerializer.spec.ts";
+import { EncodingToolsTests } from "../source/tools/encodingTools.spec.ts";
+import { FingerPrintingToolsTests, ClassIdentifierTests } from "../source/tools/fingerprintingTools.spec.ts";
+import { HashToolsTests } from "../source/tools/hashTools.spec.ts";
 
-const stringTests = new StringTests();
+const stringTests = new JSONStringTests();
 stringTests.emitsSimpleString();
 stringTests.escapesRefString();
 stringTests.escapesSymString();
 stringTests.escapesJSONChriticalCharacters();
 
-const numberTests = new NumberTests();
+const numberTests = new JSONNumberTests();
 numberTests.emitsSimpleNumber();
 numberTests.emitsNAN();
 numberTests.emitsInfinity();
 
-const symbolTests = new SymbolTests();
+const symbolTests = new JSONSymbolTests();
 symbolTests.emitsSimpleSymbol();
 
-const binaryTests = new BinaryTests();
+const binaryTests = new JSONBinaryTests();
 
-const objectTests = new ObjectTests();
+const objectTests = new JSONObjectTests();
 objectTests.emitsObjectUnformatted();
 objectTests.emitsObjectFormatted();
 objectTests.emitsObjectsWithKnownSymbols();
 
-const instanceTests = new InstanceTests();
+const instanceTests = new JSONInstanceTests();
 instanceTests.emitsSimpleClassInstance();
 instanceTests.emitsCustomizedClassInstance();
 instanceTests.emitsCircularInstances();
