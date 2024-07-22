@@ -14,7 +14,7 @@ export abstract class Interpreter
 
     protected abstract initializeByteInterpreter(): void;
     protected abstract advance(chunk: string): void;
-    protected abstract terminate() : void;
+    protected abstract terminate(): void;
 
     async parseStream(stream: AsyncGenerator<string>)
     {
@@ -46,11 +46,11 @@ export abstract class Interpreter
     private *getInterpreterStream()
     {
         const firstToken = (yield) as Symbol;
-        if(firstToken !== Token.StreamStart)
+        if (firstToken !== Token.StreamStart)
             throw new Error("Invalid start");
         const returnValue = yield* this.parseValue();
         const lastToken = (yield) as Symbol;
-        if(lastToken !== Token.StreamEnd)
+        if (lastToken !== Token.StreamEnd)
             throw new Error("Expected end of stream.");
         return returnValue;
     }
@@ -71,8 +71,9 @@ export abstract class Interpreter
                 return yield* this.parseBinary();
             case Token.Reference:
                 return this.parseReference((yield) as number);
-            case Token.String:
             case Token.Symbol:
+                return this.parseSymbol((yield) as string);
+            case Token.String:
             case Token.Number:
             case Token.Boolean:
             case Token.Constant:

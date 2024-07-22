@@ -1,5 +1,5 @@
 import { SerializeJSONBinaryTests, SerializeJSONInstanceTests, SerializeJSONNumberTests, SerializeJSONObjectTests, SerializeJSONStringTests, SerializeJSONSymbolTests } from "../source/serializers/JSONSerializer.spec.js";
-import { InterpretJSONStringTests, InterpretJSONNumberTests, InterpretJSONBooleanTests, InterpretJSONNullTests, InterpretJSONObjectTests, InterpretJSONArrayTests } from "../source/interpreters/JSONInterpreter.spec.js";
+import { InterpretJSONStringTests, InterpretJSONNumberTests, InterpretJSONBooleanTests, InterpretJSONNullTests, InterpretJSONObjectTests, InterpretJSONArrayTests, InterpretJSONSpecialValuesTests } from "../source/interpreters/JSONInterpreter.spec.js";
 import { EncodingToolsTests } from "../source/tools/encodingTools.spec.js";
 import { FingerPrintingToolsTests, ClassIdentifierTests } from "../source/tools/fingerprintingTools.spec.js";
 import { HashToolsTests } from "../source/tools/hashTools.spec.js";
@@ -81,6 +81,15 @@ interpretJSONObjectTests.parsesNestedObject()
 const interpretJSONArrayTests = new InterpretJSONArrayTests()
 interpretJSONArrayTests.parsesSimpleArray()
 interpretJSONArrayTests.parsesNestedArray()
+
+const interpretJSONSpecialValuesTests = new InterpretJSONSpecialValuesTests();
+interpretJSONSpecialValuesTests.parsesSymbolValue()
+interpretJSONSpecialValuesTests.parsesConstNaN()
+interpretJSONSpecialValuesTests.parsesConstInfinity()
+interpretJSONSpecialValuesTests.parsesConstUndefined()
+interpretJSONSpecialValuesTests.parsesRefValue()
+interpretJSONSpecialValuesTests.parsesObjectWithSpecialValues()
+
 
 //#endregion
 

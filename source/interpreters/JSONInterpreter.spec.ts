@@ -85,3 +85,57 @@ export class InterpretJSONArrayTests {
     }
 }
 
+
+export class InterpretJSONSpecialValuesTests {
+    parsesSymbolValue() {
+        const testSymbol = Symbol("test");
+        const interpreter = new JSONInterpreter(new Map(), new Map([["test", testSymbol]]))
+        const result = interpreter.parse('"[sym: test]"')
+        assert.strictEqual(typeof result, 'symbol')
+        assert.strictEqual(result.toString(), 'Symbol(test)')
+    }
+
+    parsesConstNaN() {
+        const interpreter = new JSONInterpreter(new Map(), new Map())
+        const result = interpreter.parse('"[const: NaN]"')
+        assert.strictEqual(isNaN(result), true)
+    }
+
+    parsesConstInfinity() {
+        const interpreter = new JSONInterpreter(new Map(), new Map())
+        const result = interpreter.parse('"[const: Infinity]"')
+        assert.strictEqual(result, Infinity)
+    }
+
+    parsesConstUndefined() {
+        const interpreter = new JSONInterpreter(new Map(), new Map())
+        const result = interpreter.parse('{"key": "[const: Undefined]"}')
+        assert.strictEqual(result.key, undefined)
+    }
+
+    parsesRefValue() {
+        const preExistingObject = {};
+        const interpreter = new JSONInterpreter(new Map(), new Map(), new Map([[0, preExistingObject]]));
+        const result = interpreter.parse('[[],{},"[ref: 1]","[ref: 2]","[ref: 3]","[ref: 0]"]');
+        assert(result instanceof Array);
+        assert(result[0] instanceof Array);
+        assert(result[1] instanceof Object);
+        assert(result[2] === result);
+        assert(result[3] === result[0]);
+        assert(result[4] === result[1]);
+        assert(result[5] === preExistingObject);
+    }
+
+    parsesObjectWithSpecialValues() {
+        const testSymbol = Symbol("test");
+        const interpreter = new JSONInterpreter(new Map(), new Map([["test", testSymbol]]))
+        const result = interpreter.parse('{"sym": "[sym: test]", "nan": "[const: NaN]", "inf": "[const: Infinity]", "undef": "[const: Undefined]", "ref": "[ref: 0]"}')
+        assert.deepStrictEqual(result, {
+            sym: testSymbol,
+            nan: NaN,
+            inf: Infinity,
+            undef: undefined,
+            ref: result
+        })
+    }
+}

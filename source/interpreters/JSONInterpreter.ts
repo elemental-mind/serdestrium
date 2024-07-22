@@ -60,7 +60,7 @@ export class JSONInterpreter extends Interpreter
         return Token.StreamEnd;
     }
 
-    private *streamValue() : Generator
+    private *streamValue(): Generator
     {
         switch (this.currentCharacter)
         {
@@ -83,39 +83,47 @@ export class JSONInterpreter extends Interpreter
 
     private *streamObjectOrInstance()
     {
+        let streamMode: "Instance" | "Object";
+        
         //Skipping {
         yield;
 
         yield* this.skipWhiteSpace();
 
-        //Skipping "
-        yield;
-        const firstKey = yield* this.readRawString();
-
-        let streamMode: "Instance" | "Object";
-
-        if (firstKey === "[Type]")
+        if (this.currentCharacter !== "}")
         {
-            streamMode = "Instance";
-            this.tokenInterpreter.next(Token.InstanceStart);
+            //Skipping "
+            yield;
+            const firstKey = yield* this.readRawString();
 
-            yield* this.skipColon();
+            if (firstKey === "[Type]")
+            {
+                streamMode = "Instance";
+                this.tokenInterpreter.next(Token.InstanceStart);
 
-            this.tokenInterpreter.next(Number(yield* this.readRawString()));
+                yield* this.skipColon();
+
+                this.tokenInterpreter.next(Number(yield* this.readRawString()));
+            }
+            else
+            {
+                streamMode = "Object";
+                this.tokenInterpreter.next(Token.ObjectStart);
+
+                this.emitInterpretedString(firstKey);
+
+                yield* this.skipColon();
+
+                yield* this.streamValue();
+            }
+
+            yield* this.streamKeyValuePairs();
         }
         else
         {
             streamMode = "Object";
             this.tokenInterpreter.next(Token.ObjectStart);
-
-            this.emitInterpretedString(firstKey);
-
-            yield* this.skipColon();
-
-            yield* this.streamValue();
         }
-
-        yield* this.streamKeyValuePairs();
 
         //Skipping }
         if (this.currentCharacter !== "}") throw new Error("Expected { but got " + this.currentCharacter);
@@ -164,23 +172,26 @@ export class JSONInterpreter extends Interpreter
 
         yield* this.skipWhiteSpace();
 
-        yield* this.streamValue();
-
-        while (this.currentCharacter === ",")
+        if (this.currentCharacter !== "]")
         {
-            //Skipping ,
-            yield;
-
-            this.tokenInterpreter.next(Token.Delimiter);
-
-            yield* this.skipWhiteSpace();
-
             yield* this.streamValue();
+
+            while (this.currentCharacter === ",")
+            {
+                //Skipping ,
+                yield;
+
+                this.tokenInterpreter.next(Token.Delimiter);
+
+                yield* this.skipWhiteSpace();
+
+                yield* this.streamValue();
+            }
         }
 
         if (this.currentCharacter !== ']' as string) throw new Error("Expected [ but got " + this.currentCharacter);
         yield;
-        
+
         this.tokenInterpreter.next(Token.ArrayEnd);
     }
 
@@ -333,7 +344,7 @@ export class JSONInterpreter extends Interpreter
                     default:
                         throw new Error("Invalid escape sequence");
                 }
-            } 
+            }
             else
             {
                 this.charBuffer.push(this.currentCharacter);
@@ -367,11 +378,14 @@ export class JSONInterpreter extends Interpreter
                 switch (string.charAt(1))
                 {
                     case "r":
-                        return this.emitReferenceIdentifier(string);
+                        if (string.startsWith("[ref: "))
+                            return this.emitReference(string);
                     case "c":
-                        return this.emitConstant(string);
+                        if (string.startsWith("[const: "))
+                            return this.emitConstant(string);
                     case "s":
-                        return this.emitSymbolIdentifier(string);
+                        if (string.startsWith("[sym: "))
+                            return this.emitSymbol(string);
                     default:
                         return this.emitString(string);
                 }
@@ -404,21 +418,21 @@ export class JSONInterpreter extends Interpreter
         }
     }
 
-    private emitSymbolIdentifier(string: string)
+    private emitSymbol(string: string)
     {
         //[sym: Identifier]
         this.tokenInterpreter.next(Token.Symbol);
         this.tokenInterpreter.next(string.substring(6, string.length - 1));
     }
 
-    private emitReferenceIdentifier(string: string)
+    private emitReference(string: string)
     {
         //[ref: 1234567]
         this.tokenInterpreter.next(Token.Reference);
         this.tokenInterpreter.next(Number(string.substring(6, string.length - 1)));
     }
 
-    private *streamNumberOrNativeValue()
+    private * streamNumberOrNativeValue()
     {
         switch (this.currentCharacter)
         {
@@ -445,7 +459,7 @@ export class JSONInterpreter extends Interpreter
         }
     }
 
-    private *streamNumber()
+    private * streamNumber()
     {
         while (true)
         {
@@ -479,7 +493,7 @@ export class JSONInterpreter extends Interpreter
         }
     }
 
-    private *streamNativeValue()
+    private * streamNativeValue()
     {
         switch (yield* this.tryMatch(["true", "false", "null"]))
         {
@@ -504,23 +518,26 @@ export class JSONInterpreter extends Interpreter
         yield* this.skipWhiteSpace();
     }
 
-    private *tryMatch(uniqueBeginningCandidates: string[])
+    private * tryMatch(uniqueBeginningCandidates: string[])
     {
         const candidate = uniqueBeginningCandidates.find(value => value.startsWith(this.currentCharacter))!;
 
-        while (this.charBuffer.length < candidate.length)
+        if (candidate)
         {
-            if (this.currentCharacter !== candidate[this.charBuffer.length])
-                return undefined;
+            while (this.charBuffer.length < candidate.length)
+            {
+                if (this.currentCharacter !== candidate[this.charBuffer.length])
+                    return undefined;
 
-            this.charBuffer.push(this.currentCharacter);
-            yield;
+                this.charBuffer.push(this.currentCharacter);
+                yield;
+            }
         }
 
         return candidate;
     }
 
-    private *skipWhiteSpace()
+    private * skipWhiteSpace()
     {
         while (true)
         {
