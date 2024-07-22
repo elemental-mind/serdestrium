@@ -55,9 +55,9 @@ export abstract class Interpreter
         return returnValue;
     }
 
-    private *parseValue(): TokenStreamInterpreter<TokenSymbol | any, any>
+    private *parseValue(type?: symbol): TokenStreamInterpreter<TokenSymbol | any, any>
     {
-        const token = yield;
+        const token = type ?? (yield);
 
         switch (token)
         {
@@ -76,7 +76,8 @@ export abstract class Interpreter
             case Token.Number:
             case Token.Boolean:
             case Token.Constant:
-                return yield;
+                const value = yield;
+                return value;
         }
     }
 
@@ -98,14 +99,15 @@ export abstract class Interpreter
         ParseArrayValues:
         while (true)
         {
-            switch (yield)
+            const token = yield;
+            switch (token)
             {
                 case Token.Delimiter:
                     continue ParseArrayValues;
                 case Token.ArrayEnd:
                     break ParseArrayValues;
                 default:
-                    array.push(yield* this.parseValue());
+                    array.push(yield* this.parseValue(token));
             }
         }
 

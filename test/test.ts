@@ -78,9 +78,9 @@ const interpretJSONObjectTests = new InterpretJSONObjectTests()
 interpretJSONObjectTests.parsesSimpleObject()
 interpretJSONObjectTests.parsesNestedObject()
 
-// const interpretJSONArrayTests = new InterpretJSONArrayTests()
-// interpretJSONArrayTests.parsesSimpleArray()
-// interpretJSONArrayTests.parsesNestedArray()
+const interpretJSONArrayTests = new InterpretJSONArrayTests()
+interpretJSONArrayTests.parsesSimpleArray()
+interpretJSONArrayTests.parsesNestedArray()
 
 //#endregion
 

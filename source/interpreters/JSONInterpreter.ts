@@ -179,7 +179,8 @@ export class JSONInterpreter extends Interpreter
         }
 
         if (this.currentCharacter !== ']' as string) throw new Error("Expected [ but got " + this.currentCharacter);
-
+        yield;
+        
         this.tokenInterpreter.next(Token.ArrayEnd);
     }
 
