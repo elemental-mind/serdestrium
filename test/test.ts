@@ -42,6 +42,11 @@ const serializeJSONSymbolTests = new SerializeJSONSymbolTests();
 serializeJSONSymbolTests.emitsSimpleSymbol();
 
 const serializeJSONBinaryTests = new SerializeJSONBinaryTests();
+serializeJSONBinaryTests.serializesEmptyBytes()
+serializeJSONBinaryTests.serializesSingleByte()
+serializeJSONBinaryTests.serializesDoubleByte()
+serializeJSONBinaryTests.serializesTripleByte()
+serializeJSONBinaryTests.serializesAllByteValues()
 
 const serializeJSONObjectTests = new SerializeJSONObjectTests();
 serializeJSONObjectTests.emitsObjectUnformatted();

@@ -136,6 +136,7 @@ export abstract class Serializer<T extends string | ArrayBufferView>
                     case null:
                     case Object.prototype:
                     case Array.prototype:
+                    case ArrayBuffer.prototype:
                         return object;
                     case Int8Array.prototype:
                     case Uint8Array.prototype:
