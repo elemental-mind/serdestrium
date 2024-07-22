@@ -1,6 +1,14 @@
 import { Interpreter } from "../interpreter.js";
 import { Token } from "../serium.js";
 
+const Configuration = {
+    //When parsing a base64 encoded string, this is the byte buffer size that will be cached and the buffer size that will be sent to the token interpreter.
+    //This MUST be multiples of 3
+    ByteBufferSize: 3000,
+    //When reading in a string, this is the buffer size used before concatenating characters into a new string
+    CharBufferSize: 1000
+} as const;
+
 export class JSONInterpreter extends Interpreter
 {
     private currentCharacter: string = "";
@@ -8,7 +16,7 @@ export class JSONInterpreter extends Interpreter
 
     private base64LookupTable?: Uint8Array;
 
-    private charBuffer = new Array<string>(1000);
+    private charBuffer = new Array<string>(Configuration.CharBufferSize);
 
     private result!: {
         streamComplete: boolean,
@@ -84,7 +92,7 @@ export class JSONInterpreter extends Interpreter
     private *streamObjectOrInstance()
     {
         let streamMode: "Instance" | "Object";
-        
+
         //Skipping {
         yield;
 
@@ -242,7 +250,7 @@ export class JSONInterpreter extends Interpreter
 
         const charCodeBuffer = new Uint8Array(4);
         let charCodeBufUsage = 0;
-        const byteBuffer = new Uint8Array(3000);
+        const byteBuffer = new Uint8Array(Configuration.ByteBufferSize);
         let byteBufUsage = 0;
         let chunk = 0;
 
@@ -263,9 +271,11 @@ export class JSONInterpreter extends Interpreter
                 byteBuffer[byteBufUsage++] = chunk & 0xFF;
 
                 // Emitting Chunk
-                if (byteBufUsage === 3000)
+                if (byteBufUsage === Configuration.ByteBufferSize)
                 {
-                    this.tokenInterpreter.next(byteBuffer);
+                    const byteChunk = new Uint8Array(Configuration.ByteBufferSize);
+                    byteChunk.set(byteBuffer);
+                    this.tokenInterpreter.next(byteChunk);
                     byteBufUsage = 0;
                 }
 
@@ -351,7 +361,7 @@ export class JSONInterpreter extends Interpreter
             }
 
             //Flushing the buffer;
-            if (this.charBuffer.length === 1000)
+            if (this.charBuffer.length === Configuration.CharBufferSize)
             {
                 string = string.concat(...this.charBuffer);
                 this.charBuffer.length = 0;
@@ -524,9 +534,9 @@ export class JSONInterpreter extends Interpreter
 
         if (candidate)
         {
-            while (this.charBuffer.length < candidate.length)
+            for (let i = 0; i < candidate.length; i++)
             {
-                if (this.currentCharacter !== candidate[this.charBuffer.length])
+                if (this.currentCharacter !== candidate[i])
                     return undefined;
 
                 this.charBuffer.push(this.currentCharacter);

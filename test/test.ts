@@ -1,5 +1,5 @@
 import { SerializeJSONBinaryTests, SerializeJSONInstanceTests, SerializeJSONNumberTests, SerializeJSONObjectTests, SerializeJSONStringTests, SerializeJSONSymbolTests } from "../source/serializers/JSONSerializer.spec.js";
-import { InterpretJSONStringTests, InterpretJSONNumberTests, InterpretJSONBooleanTests, InterpretJSONNullTests, InterpretJSONObjectTests, InterpretJSONArrayTests, InterpretJSONSpecialValuesTests } from "../source/interpreters/JSONInterpreter.spec.js";
+import { InterpretJSONStringTests, InterpretJSONNumberTests, InterpretJSONBooleanTests, InterpretJSONNullTests, InterpretJSONObjectTests, InterpretJSONArrayTests, InterpretJSONSpecialValuesTests, InterpretJSONBinaryTests } from "../source/interpreters/JSONInterpreter.spec.js";
 import { EncodingToolsTests } from "../source/tools/encodingTools.spec.js";
 import { FingerPrintingToolsTests, ClassIdentifierTests } from "../source/tools/fingerprintingTools.spec.js";
 import { HashToolsTests } from "../source/tools/hashTools.spec.js";
@@ -95,8 +95,14 @@ interpretJSONSpecialValuesTests.parsesConstUndefined()
 interpretJSONSpecialValuesTests.parsesRefValue()
 interpretJSONSpecialValuesTests.parsesObjectWithSpecialValues()
 
+const interpretJSONBinaryTests = new InterpretJSONBinaryTests()
+interpretJSONBinaryTests.parsesEmptyBinaryString()
+interpretJSONBinaryTests.parsesSingleByteBinaryString()
+interpretJSONBinaryTests.parsesTwoByteBinaryString()
+interpretJSONBinaryTests.parsesThreeByteBinaryString()
+interpretJSONBinaryTests.parsesMultipleByteBinaryString()
+interpretJSONBinaryTests.parsesMultiChunkBinaryString();
 
 //#endregion
 
 console.log("All tests passed!")
-

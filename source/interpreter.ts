@@ -168,9 +168,30 @@ export abstract class Interpreter
         return instance;
     }
 
-    private *parseBinary()
+    private *parseBinary(): TokenStreamInterpreter<symbol | Uint8Array, ArrayBuffer>
     {
+        const chunks = [];
+        let byteLength = 0;
 
+        let byteChunkOrEndToken = yield;
+
+        while (byteChunkOrEndToken !== Token.BinaryEnd)
+        {
+            chunks.push(byteChunkOrEndToken as Uint8Array);
+            byteLength += (byteChunkOrEndToken as Uint8Array).byteLength;
+            byteChunkOrEndToken = yield;
+        }
+
+        const byteArray = new Uint8Array(byteLength);
+        let currentOffset = 0;
+
+        for (const chunk of chunks)
+        {
+            byteArray.set(chunk, currentOffset);
+            currentOffset += chunk.byteLength;
+        }
+
+        return byteArray.buffer;
     }
 
     private *parseSerializedNativeType(): TokenStreamInterpreter<any, any>
