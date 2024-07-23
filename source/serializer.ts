@@ -1,5 +1,5 @@
 import { FingerPrintingTools } from "./tools/fingerprintingTools.js";
-import { NativeType, TypedElementTypes, SerializationSymbols, InternalConstant, Constants, SerializedType } from "./serdestrium.js";
+import { InternalConstant, Constants, SerializedType } from "./constants.js";
 
 export abstract class Serializer<T extends string | ArrayBufferView>
 {
@@ -8,10 +8,7 @@ export abstract class Serializer<T extends string | ArrayBufferView>
         public knownSymbols: Map<symbol, string> = new Map(),
         public knownObjects: Map<any, number> = new Map()
     )
-    {
-        this.knownSymbols.set(SerializationSymbols.CustomType, "Type");
-        this.knownSymbols.set(SerializationSymbols.InternalType, "InternalType");
-    }
+    { }
 
     protected abstract emitInstance(instanceData: SerializedType): Generator<T>;
     protected abstract emitObject(object: null | object): Generator<T>;

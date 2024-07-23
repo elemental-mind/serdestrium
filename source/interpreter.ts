@@ -1,4 +1,5 @@
-import { ICustomSerialization, Token, TokenSymbol, TypedElementTypes } from "./serdestrium.js";
+import { ICustomSerialization } from "./serdestrium.js";
+import { Token, TokenSymbol, TypedElementTypes } from "./constants.js";
 
 type TokenStreamInterpreter<Consumes, Returns> = Generator<void, Returns, Consumes>;
 
