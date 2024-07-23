@@ -6,28 +6,28 @@ export class SerializeJSONStringTests
 {
     emitsSimpleString()
     {
-        const serializer = new JSONSerializer(new Map(), new Map());
+        const serializer = new JSONSerializer();
         const result = serializer.serialize("Hello World");
         assert.strictEqual(result, `"Hello World"`);
     }
 
     escapesRefString()
     {
-        const serializer = new JSONSerializer(new Map(), new Map());
+        const serializer = new JSONSerializer();
         const result = serializer.serialize("[ref: 1]");
         assert.strictEqual(result, `"#[ref: 1]"`);
     }
 
     escapesSymString()
     {
-        const serializer = new JSONSerializer(new Map(), new Map());
+        const serializer = new JSONSerializer();
         const result = serializer.serialize("[sym: 1]");
         assert.strictEqual(result, `"#[sym: 1]"`);
     }
 
     escapesJSONChriticalCharacters()
     {
-        const serializer = new JSONSerializer(new Map(), new Map());
+        const serializer = new JSONSerializer();
         const result = serializer.serialize(`"Hello World"`);
         assert.strictEqual(result, `"\\"Hello World\\""`);
     }
@@ -37,21 +37,21 @@ export class SerializeJSONNumberTests
 {
     emitsSimpleNumber()
     {
-        const serializer = new JSONSerializer(new Map(), new Map());
+        const serializer = new JSONSerializer();
         const result = serializer.serialize(123);
         assert.strictEqual(result, "123");
     }
 
     emitsNAN()
     {
-        const serializer = new JSONSerializer(new Map(), new Map());
+        const serializer = new JSONSerializer();
         const result = serializer.serialize(NaN);
         assert.strictEqual(result, `"[const: NaN]"`);
     }
 
     emitsInfinity()
     {
-        const serializer = new JSONSerializer(new Map(), new Map());
+        const serializer = new JSONSerializer();
         const result = serializer.serialize(Infinity);
         assert.strictEqual(result, `"[const: Infinity]"`);
     }
@@ -62,7 +62,7 @@ export class SerializeJSONSymbolTests
     emitsSimpleSymbol()
     {
         const symbol = Symbol("test");
-        const serializer = new JSONSerializer(new Map(), new Map([[symbol, "test"]]));
+        const serializer = new JSONSerializer({ knownSymbols: new Map([[symbol, "test"]]) });
         const result = serializer.serialize(symbol);
         assert.strictEqual(result, `"[sym: test]"`);
     }
@@ -83,7 +83,7 @@ export class SerializeJSONBinaryTests
 
     serializesEmptyBytes()
     {
-        const serializer = new JSONSerializer(new Map(), new Map());
+        const serializer = new JSONSerializer();
         const emptyArray = new Uint8Array(0);
         const result = serializer.serialize(emptyArray.buffer);
         assert.strictEqual(result, `"[bin]"`);
@@ -91,34 +91,34 @@ export class SerializeJSONBinaryTests
 
     serializesSingleByte()
     {
-        const serializer = new JSONSerializer(new Map(), new Map());
+        const serializer = new JSONSerializer();
         const smallArray = this.testBytes.buffer.slice(0, 1);
         const result = serializer.serialize(smallArray);
-        const base64String = btoa(this.testByteString.substring(0,1));
+        const base64String = btoa(this.testByteString.substring(0, 1));
         assert.strictEqual(result, `"[bin]${base64String}"`);
     }
 
     serializesDoubleByte()
     {
-        const serializer = new JSONSerializer(new Map(), new Map());
+        const serializer = new JSONSerializer();
         const smallArray = this.testBytes.buffer.slice(0, 2);
         const result = serializer.serialize(smallArray);
-        const base64String = btoa(this.testByteString.substring(0,2));
+        const base64String = btoa(this.testByteString.substring(0, 2));
         assert.strictEqual(result, `"[bin]${base64String}"`);
     }
 
     serializesTripleByte()
     {
-        const serializer = new JSONSerializer(new Map(), new Map());
+        const serializer = new JSONSerializer();
         const smallArray = this.testBytes.buffer.slice(0, 3);
         const result = serializer.serialize(smallArray);
-        const base64String = btoa(this.testByteString.substring(0,3));
+        const base64String = btoa(this.testByteString.substring(0, 3));
         assert.strictEqual(result, `"[bin]${base64String}"`);
     }
 
     serializesAllByteValues()
     {
-        const serializer = new JSONSerializer(new Map(), new Map());
+        const serializer = new JSONSerializer();
         const result = serializer.serialize(this.testBytes.buffer);
         const base64String = btoa(this.testByteString);
         assert.strictEqual(result, `"[bin]${base64String}"`);
@@ -129,7 +129,7 @@ export class SerializeJSONObjectTests
 {
     emitsObjectUnformatted()
     {
-        const serializer = new JSONSerializer(new Map(), new Map());
+        const serializer = new JSONSerializer();
         const obj = {
             numberKey: 123,
             stringKey: "Some string",
@@ -141,7 +141,7 @@ export class SerializeJSONObjectTests
 
     emitsObjectFormatted()
     {
-        const serializer = new JSONSerializer(new Map(), new Map(), new Map(), { indentation: "    " });
+        const serializer = new JSONSerializer({}, { indentation: "    " });
 
         const obj = {
             numberKey: 123,
@@ -163,7 +163,7 @@ export class SerializeJSONObjectTests
     emitsObjectsWithKnownSymbols()
     {
         const symbol = Symbol("SymProp");
-        const serializer = new JSONSerializer(new Map(), new Map([[symbol, "SymProp"]]));
+        const serializer = new JSONSerializer({ knownSymbols: new Map([[symbol, "SymProp"]]) });
         const obj = {
             numberKey: 123,
             stringKey: "Some string",
@@ -178,7 +178,7 @@ export class SerializeJSONInstanceTests
 {
     emitsSimpleClassInstance()
     {
-        const serializer = new JSONSerializer(new Map([[SimpleTestClass, "SimpleClass"]]), new Map());
+        const serializer = new JSONSerializer({ knownClasses: new Map([[SimpleTestClass, "SimpleClass"]]) });
         const instance = new SimpleTestClass();
         const result = serializer.serialize(instance);
         assert.strictEqual(result, `{"[Type]":"SimpleClass","name":"","age":35,"isActive":false,"preferences":{"mail":"john.doe@example.com","marketing":false}}`);
@@ -186,7 +186,7 @@ export class SerializeJSONInstanceTests
 
     emitsCustomizedClassInstance()
     {
-        const serializer = new JSONSerializer(new Map([[CustomizedTestClass, "CustomizedClass"]]), new Map());
+        const serializer = new JSONSerializer({ knownClasses: new Map([[CustomizedTestClass, "CustomizedClass"]]) });
         const instance = new CustomizedTestClass();
         const result = serializer.serialize(instance);
         assert.strictEqual(result, `{"[Type]":"CustomizedClass","name":"","age":35,"preferences":{"mail":"john.doe@example.com","marketing":false},"isActive":false}`);
@@ -194,7 +194,7 @@ export class SerializeJSONInstanceTests
 
     emitsCircularInstances()
     {
-        const serializer = new JSONSerializer(new Map([[TestRing as any, "TestRing"], [TestRingElement, "TestRingElement"]]), new Map(), new Map(), { indentation: "    " });
+        const serializer = new JSONSerializer({ knownClasses: new Map([[TestRing as any, "TestRing"], [TestRingElement, "TestRingElement"]]) }, { indentation: "    " });
         const ring = new TestRing<number>();
         ring.add(1);
         ring.add(2);
@@ -213,19 +213,19 @@ export class SerializeJSONInstanceTests
             "next": {
                 "[Type]": "TestRingElement",
                 "value": 3,
-                "next": "[ref: 1]",
-                "previous": "[ref: 2]"
+                "next": "[ref: ~2]",
+                "previous": "[ref: ~3]"
             },
-            "previous": "[ref: 1]"
+            "previous": "[ref: ~2]"
         },
-        "previous": "[ref: 3]"
+        "previous": "[ref: ~4]"
     }
 }`);
     }
 
     emitsSelfReferencingInstances()
     {
-        const serializer = new JSONSerializer(new Map([[TestRing as any, "TestRing"], [TestRingElement, "TestRingElement"]]), new Map(), new Map(), { indentation: "    " });
+        const serializer = new JSONSerializer({ knownClasses: new Map([[TestRing as any, "TestRing"], [TestRingElement, "TestRingElement"]]) }, { indentation: "    " });
         const ring = new TestRing<number>();
         ring.add(1);
 
@@ -236,8 +236,8 @@ export class SerializeJSONInstanceTests
     "entry": {
         "[Type]": "TestRingElement",
         "value": 1,
-        "next": "[ref: 1]",
-        "previous": "[ref: 1]"
+        "next": "[ref: ~2]",
+        "previous": "[ref: ~2]"
     }
 }`);
     }

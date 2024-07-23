@@ -1,20 +1,29 @@
 import { FingerPrintingTools } from "./tools/fingerprintingTools.js";
 import { InternalConstant, Constants, SerializedType } from "./constants.js";
+import { IEnvironment } from "./serdestrium.js";
+import { idGenerator } from "./tools/idTools.js";
 
 export abstract class Serializer<T extends string | ArrayBufferView>
 {
-    constructor(
-        public knownClasses: Map<any, string>,
-        public knownSymbols: Map<symbol, string> = new Map(),
-        public knownObjects: Map<any, number> = new Map()
-    )
-    { }
+    public knownClasses: Map<any, string>;
+    public knownSymbols: Map<symbol, string>;
+    public knownObjects: Map<any, string>;
+
+    protected idProvider: Generator<string>;
+
+    constructor(environment?: IEnvironment)
+    {
+        this.knownClasses = environment?.knownClasses ?? new Map();
+        this.knownSymbols = environment?.knownSymbols ?? new Map();
+        this.knownObjects = environment?.knownObjects ?? new Map();
+        this.idProvider = environment?.idGenerator?? idGenerator("~");
+    }
 
     protected abstract emitInstance(instanceData: SerializedType): Generator<T>;
     protected abstract emitObject(object: null | object): Generator<T>;
     protected abstract emitArray(array: Array<any>): Generator<T>;
     protected abstract emitBinary(blob: ArrayBuffer): Generator<T>;
-    protected abstract emitReference(identifier: number): T;
+    protected abstract emitReference(identifier: string): T;
     protected abstract emitNumber(number: number): T;
     protected abstract emitString(string: string): T;
     protected abstract emitBoolean(bool: boolean): T;
@@ -31,7 +40,7 @@ export abstract class Serializer<T extends string | ArrayBufferView>
 
         if (typeof object === "object" && object !== null)
         {
-            this.knownObjects.set(object, this.knownObjects.size);
+            this.knownObjects.set(object, this.idProvider.next().value);
         }
 
         const preformatted = this.preformat(object);

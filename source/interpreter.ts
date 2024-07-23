@@ -1,21 +1,46 @@
-import { ICustomSerialization } from "./serdestrium.js";
-import { Token, TokenSymbol, TypedElementTypes } from "./constants.js";
+import { ICustomSerialization, IEnvironment } from "./serdestrium.js";
+import { Token, TokenSymbol } from "./constants.js";
+import { idGenerator } from "./tools/idTools.js";
 
 type TokenStreamInterpreter<Consumes, Returns> = Generator<void, Returns, Consumes>;
 
 export abstract class Interpreter
 {
     protected tokenInterpreter!: Generator<any, void, TokenSymbol | any>;
+    protected idProvider: Generator<string>;
 
-    constructor(
-        public knownClasses: Map<string, any>,
-        public knownSymbols: Map<string, symbol>,
-        public knownObjects: Map<number, any> = new Map()
-    ) { }
+    public knownClasses: Map<string, any>;
+    public knownSymbols: Map<string, symbol>;
+    public knownObjects: Map<string, any>;
+
+    constructor(environment?: IEnvironment)
+    {
+        this.knownClasses = this.inverseMap(environment?.knownClasses);
+        this.knownSymbols = this.inverseMap(environment?.knownSymbols);
+        this.knownObjects = this.inverseMap(environment?.knownObjects);
+        this.idProvider = environment?.idGenerator?? idGenerator("~");
+    }
 
     protected abstract initializeByteInterpreter(): void;
     protected abstract advance(chunk: string): void;
     protected abstract terminate(): void;
+
+    private inverseMap<K, V>(map?: Map<K, V>): Map<V, K>
+    {
+        if (!map)
+            return new Map();
+
+        const inverse = new Map();
+        
+        for (const [key, value] of map)
+        {
+            if (inverse.has(value))
+                throw new Error(`Environment mappings ambiguous. "${value}" defined twice.`);
+
+            inverse.set(value, key);
+        }
+        return inverse;
+    }
 
     async parseStream(stream: AsyncGenerator<string>)
     {
@@ -71,7 +96,7 @@ export abstract class Interpreter
             case Token.BinaryStart:
                 return yield* this.parseBinary();
             case Token.Reference:
-                return this.parseReference((yield) as number);
+                return this.parseReference((yield) as string);
             case Token.Symbol:
                 return this.parseSymbol((yield) as string);
             case Token.String:
@@ -86,7 +111,7 @@ export abstract class Interpreter
     private *parseObject(): TokenStreamInterpreter<TokenSymbol, object>
     {
         const object = {};
-        this.knownObjects.set(this.knownObjects.size, object);
+        this.knownObjects.set(this.idProvider.next().value, object);
 
         yield* this.parseKeyValuePairs(object);
 
@@ -96,7 +121,7 @@ export abstract class Interpreter
     private *parseArray(): TokenStreamInterpreter<TokenSymbol, Array<any>>
     {
         const array = [] as any[];
-        this.knownObjects.set(this.knownObjects.size, array);
+        this.knownObjects.set(this.idProvider.next().value, array);
 
         ParseArrayValues:
         while (true)
@@ -150,7 +175,7 @@ export abstract class Interpreter
             throw new Error("Unknown class");
 
         const instance: ICustomSerialization = Object.create(clss.prototype);
-        this.knownObjects.set(this.knownObjects.size, instance);
+        this.knownObjects.set(this.idProvider.next().value, instance);
 
         if (clss.prototype.onDeserialization)
         {
@@ -211,7 +236,7 @@ export abstract class Interpreter
     private *parseTypedArray(): TokenStreamInterpreter<any, any>
     {
         const data = (yield* this.parseSerializedNativeType()) as {
-            type: TypedElementTypes,
+            type: "Int8" | "Uint8" | "Uint8Clamped" | "Int16" | "Uint16" | "Int32" | "Uint32" | "Float32" | "Float64" | "BigInt64" | "BigUint64",           
             offset: number,
             length: number,
             buffer: ArrayBuffer;
@@ -341,7 +366,7 @@ export abstract class Interpreter
         }
     }
 
-    private parseReference(refID: number): TokenStreamInterpreter<number, object>
+    private parseReference(refID: string): TokenStreamInterpreter<number, object>
     {
         const referencedObject = this.knownObjects.get(refID);
 

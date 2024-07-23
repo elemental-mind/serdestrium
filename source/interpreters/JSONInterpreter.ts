@@ -1,7 +1,7 @@
 import { Interpreter } from "../interpreter.js";
 import { Token } from "../constants.js";
 
-const Configuration = {
+const JSONInterpreterConfiguration = {
     //When parsing a base64 encoded string, this is the byte buffer size that will be cached and the buffer size that will be sent to the token interpreter.
     //This MUST be multiples of 3
     ByteBufferSize: 3000,
@@ -16,7 +16,7 @@ export class JSONInterpreter extends Interpreter
 
     private base64LookupTable?: Uint8Array;
 
-    private charBuffer = new Array<string>(Configuration.CharBufferSize);
+    private charBuffer = new Array<string>(JSONInterpreterConfiguration.CharBufferSize);
 
     private result!: {
         streamComplete: boolean,
@@ -250,7 +250,7 @@ export class JSONInterpreter extends Interpreter
 
         const charCodeBuffer = new Uint8Array(4);
         let charCodeBufUsage = 0;
-        const byteBuffer = new Uint8Array(Configuration.ByteBufferSize);
+        const byteBuffer = new Uint8Array(JSONInterpreterConfiguration.ByteBufferSize);
         let byteBufUsage = 0;
         let chunk = 0;
 
@@ -271,9 +271,9 @@ export class JSONInterpreter extends Interpreter
                 byteBuffer[byteBufUsage++] = chunk & 0xFF;
 
                 // Emitting Chunk
-                if (byteBufUsage === Configuration.ByteBufferSize)
+                if (byteBufUsage === JSONInterpreterConfiguration.ByteBufferSize)
                 {
-                    const byteChunk = new Uint8Array(Configuration.ByteBufferSize);
+                    const byteChunk = new Uint8Array(JSONInterpreterConfiguration.ByteBufferSize);
                     byteChunk.set(byteBuffer);
                     this.tokenInterpreter.next(byteChunk);
                     byteBufUsage = 0;
@@ -361,7 +361,7 @@ export class JSONInterpreter extends Interpreter
             }
 
             //Flushing the buffer;
-            if (this.charBuffer.length === Configuration.CharBufferSize)
+            if (this.charBuffer.length === JSONInterpreterConfiguration.CharBufferSize)
             {
                 string = string.concat(...this.charBuffer);
                 this.charBuffer.length = 0;
@@ -437,9 +437,9 @@ export class JSONInterpreter extends Interpreter
 
     private emitReference(string: string)
     {
-        //[ref: 1234567]
+        //[ref: ~abcd123]
         this.tokenInterpreter.next(Token.Reference);
-        this.tokenInterpreter.next(Number(string.substring(6, string.length - 1)));
+        this.tokenInterpreter.next(string.substring(6, string.length - 1));
     }
 
     private * streamNumberOrNativeValue()

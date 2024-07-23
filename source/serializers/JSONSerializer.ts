@@ -1,20 +1,19 @@
 import { Serializer } from "../serializer.js";
 import { InternalConstant, InternalConstants, SerializedType } from "../constants.js";
+import { IEnvironment } from "../serdestrium.js";
 
 export class JSONSerializer extends Serializer<string>
 {
     private base64Encodings = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     private indentString = "";
     constructor(
-        knownClasses: Map<any, string>,
-        knownSymbols: Map<symbol, string>,
-        knownObjects: Map<any, number> = new Map(),
+        environment?: IEnvironment,
         public whitespace?: {
             indentation: string;
         }
     )
     {
-        super(knownClasses, knownSymbols, knownObjects);
+        super(environment);
     }
 
     protected *emitInstance(instanceData: SerializedType)
