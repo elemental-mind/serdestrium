@@ -1,5 +1,5 @@
 import { Interpreter } from "../interpreter.js";
-import { Token } from "../serium.js";
+import { Token } from "../serdestrium.js";
 
 const Configuration = {
     //When parsing a base64 encoded string, this is the byte buffer size that will be cached and the buffer size that will be sent to the token interpreter.

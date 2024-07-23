@@ -1,4 +1,4 @@
-import { ICustomSerialization } from "../source/serium.js";
+import { ICustomSerialization } from "../source/serdestrium.js";
 
 export class SimpleTestClass
 {

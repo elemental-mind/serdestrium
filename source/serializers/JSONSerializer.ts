@@ -1,5 +1,5 @@
 import { Serializer } from "../serializer.js";
-import { InternalConstant, InternalConstants, SerializedType } from "../serium.js";
+import { InternalConstant, InternalConstants, SerializedType } from "../serdestrium.js";
 
 export class JSONSerializer extends Serializer<string>
 {

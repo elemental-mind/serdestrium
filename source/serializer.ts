@@ -1,5 +1,5 @@
 import { FingerPrintingTools } from "./tools/fingerprintingTools.js";
-import { NativeType, TypedElementTypes, SerializationSymbols, InternalConstant, Constants, SerializedType } from "./serium.js";
+import { NativeType, TypedElementTypes, SerializationSymbols, InternalConstant, Constants, SerializedType } from "./serdestrium.js";
 
 export abstract class Serializer<T extends string | ArrayBufferView>
 {
