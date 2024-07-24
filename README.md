@@ -1,6 +1,6 @@
 # Serdestrium
 
-*Ser*ialization, *De*serialization through *Str*eams with native support for ES6/TypeScript classes. Serdestrium lets you quickly and efficiently serialize and deserialize even larger-than memory files to and from JSON, YAML and XML.
+*Ser*ialization, *De*serialization through *Str*eams with native support for ES6/TypeScript classes everywhere (browser, node etc.). Serdestrium lets you quickly and efficiently serialize and deserialize even larger-than memory files to and from JSON, YAML and XML.
 
 ## Main features at a glance
 
@@ -21,6 +21,7 @@ Serdestrium natively supports:
     - YAML (soon)
     - XML (soon)
 
+- Wide JS environments support (browser, node, deno, bun, cf-workers etc.)
 - Tree-shakeable
 - Dependency-free
 

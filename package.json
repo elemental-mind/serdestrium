@@ -1,6 +1,30 @@
 {
+  "name": "serdestrium",
+  "version": "0.1.0",
+  "description": "A powerful serialization and deserialization library for TypeScript",
   "type": "module",
-  "dependencies": {
-    "@types/node": "^20.14.10"
+  "main": "distribution/serdestrium.js",
+  "types": "distribution/serdestrium.d.ts",
+  "scripts": {
+    "dry-update": "tsx npm-release.ts",
+    "patch": "tsx npm-release.ts && npm version patch && git push && npm publish",
+    "release": "tsx npm-release.ts && npm version minor && git push && npm publish",
+    "test": "tsx test/test.ts"
+  },
+  "keywords": [
+    "serialization",
+    "deserialization",
+    "typescript",
+    "ES6",
+    "classes",
+    "json",
+    "XML",
+    "YAML",
+    "streaming"
+  ],
+  "author": "Magnus Meseck",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.14.12"
   }
 }
