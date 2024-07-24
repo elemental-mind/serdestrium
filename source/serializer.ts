@@ -1,4 +1,3 @@
-import { FingerPrintingTools } from "./tools/fingerprintingTools.js";
 import { InternalConstant, Constants, SerializedType } from "./constants.js";
 import { IEnvironment } from "./serdestrium.js";
 import { idGenerator } from "./tools/idTools.js";
@@ -176,13 +175,7 @@ export abstract class Serializer<T extends string | ArrayBufferView>
     {
         const prototype = Object.getPrototypeOf(instance);
 
-        let classID = this.knownClasses.get(prototype.constructor);
-
-        if (!classID)
-        {
-            classID = FingerPrintingTools.generateClassIdentifier(prototype.constructor);
-            this.knownClasses.set(prototype.constructor, classID);
-        }
+        let classID = this.knownClasses.get(prototype.constructor) || prototype.constructor.name;
 
         const serializationInfo = new SerializedType(classID);
 
