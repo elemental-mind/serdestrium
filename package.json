@@ -1,6 +1,6 @@
 {
   "name": "serdestrium",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Streaming Serialization and Deserialization for JS/TS with class support",
   "type": "module",
   "main": "distribution/serdestrium.js",
