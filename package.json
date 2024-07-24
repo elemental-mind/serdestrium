@@ -1,7 +1,7 @@
 {
   "name": "serdestrium",
   "version": "0.1.0",
-  "description": "A powerful serialization and deserialization library for TypeScript",
+  "description": "Streaming Serialization and Deserialization for JS/TS with class support",
   "type": "module",
   "main": "distribution/serdestrium.js",
   "types": "distribution/serdestrium.d.ts",
