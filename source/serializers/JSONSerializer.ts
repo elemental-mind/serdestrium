@@ -4,7 +4,6 @@ import { IEnvironment } from "../serdestrium.js";
 
 export class JSONSerializer extends Serializer<string>
 {
-    private base64Encodings = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     private indentString = "";
     constructor(
         environment?: IEnvironment,
@@ -128,59 +127,10 @@ export class JSONSerializer extends Serializer<string>
         yield "]";
     }
 
-    protected *emitBinary(blob: ArrayBuffer)
+    protected *emitBinary(buffer: ArrayBuffer)
     {
-        //Inspired by https://gist.github.com/jonleighton/958841
-        //This streams a base64 encoded string from an ArrayBuffer
         yield `"[bin]`;
-
-        const bytes = new Uint8Array(blob);
-        const remainingBytes = bytes.byteLength % 3;
-        const chunkedBytesLength = bytes.byteLength - remainingBytes;
-
-        let a, b, c, d;
-        let chunk;
-
-        // Main loop deals with bytes in chunks of 3
-        for (let i = 0; i < chunkedBytesLength; i = i + 3)
-        {
-            // Combine the three bytes into a single integer
-            chunk = (bytes[i] << 16) | (bytes[i + 1] << 8) | bytes[i + 2];
-
-            // Use bitmasks to extract 6-bit segments from the triplet
-            a = (chunk & 16515072) >> 18;   // 16515072 = (2^6 - 1) << 18
-            b = (chunk & 258048) >> 12;     // 258048   = (2^6 - 1) << 12
-            c = (chunk & 4032) >> 6;        // 4032     = (2^6 - 1) << 6
-            d = chunk & 63;                 // 63       = 2^6 - 1
-
-            // Convert the raw binary segments to the appropriate ASCII encoding
-            yield this.base64Encodings[a] + this.base64Encodings[b] + this.base64Encodings[c] + this.base64Encodings[d];
-        }
-
-        // Deal with the remaining bytes and padding
-        if (remainingBytes == 1)
-        {
-            chunk = bytes[chunkedBytesLength];
-
-            a = (chunk & 252) >> 2; // 252 = (2^6 - 1) << 2
-
-            // Set the 4 least significant bits to zero
-            b = (chunk & 3) << 4; // 3   = 2^2 - 1
-
-            yield this.base64Encodings[a] + this.base64Encodings[b] + '==';
-        } else if (remainingBytes == 2)
-        {
-            chunk = (bytes[chunkedBytesLength] << 8) | bytes[chunkedBytesLength + 1];
-
-            a = (chunk & 64512) >> 10; // 64512 = (2^6 - 1) << 10
-            b = (chunk & 1008) >> 4; // 1008  = (2^6 - 1) << 4
-
-            // Set the 2 least significant bits to zero
-            c = (chunk & 15) << 2; // 15    = 2^4 - 1
-
-            yield this.base64Encodings[a] + this.base64Encodings[b] + this.base64Encodings[c] + '=';
-        }
-
+        yield* this.streamArrayBufferAsBase64String(buffer);
         yield `"`;
     }
 
