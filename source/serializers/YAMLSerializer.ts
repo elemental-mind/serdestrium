@@ -1,6 +1,7 @@
 import { Serializer } from "../serializer.js";
 import { InternalConstant, InternalConstants, SerializedType } from "../constants.js";
 import { IEnvironment } from "../serdestrium.js";
+import { idGenerator } from "../tools/idTools.js";
 
 export interface YAMLFormatting
 {
@@ -18,6 +19,7 @@ export class YAMLSerializer extends Serializer<string>
     )
     {
         super(environment);
+        this.idProvider = environment?.idGenerator ?? idGenerator();
     }
 
     protected * emitObject(object: any)
@@ -39,7 +41,7 @@ export class YAMLSerializer extends Serializer<string>
     {
         let emittedKeys = false;
 
-        yield `${this.indentation.objectHeaderSeparator} !${instanceData.type}`;
+        yield `${this.indentation.objectHeaderSeparator}!${instanceData.type}`;
 
         const dataObj = instanceData.data;
         for (const key of Reflect.ownKeys(dataObj))
@@ -58,7 +60,7 @@ export class YAMLSerializer extends Serializer<string>
     private * emitKVPair(key: symbol | string, value: any)
     {
         yield this.indentation.keySeparator;
-        yield `${typeof key === "string" ? this.escapedString(key) : this.emitSymbol(key)}: `;
+        yield `${typeof key === "string" ? this.escapedKey(key) : this.emitSymbol(key)}: `;
         this.indentation.push(KeyIndentainer);
         yield* this.stream(value);
         this.indentation.pop();
@@ -72,6 +74,7 @@ export class YAMLSerializer extends Serializer<string>
         {
             emittedKeys = true;
             yield this.indentation.bulletSeparator;
+            yield "- ";
             this.indentation.push(BulletIndentainer);
             yield* this.stream(element);
             this.indentation.pop();
@@ -131,8 +134,16 @@ export class YAMLSerializer extends Serializer<string>
         return `!symbol ${symbolName}`;
     }
 
+    private escapedKey(key: string)
+    {
+        return key.includes(" ") ? `'${key}'` : this.escapedString(key);
+    }
+
     private escapedString(string: string)
     {
+        if(string === "")
+            return `''`;
+
         switch (string.charAt(0))
         {
             case "t":
@@ -215,13 +226,13 @@ class KeyIndentainer extends Indentainer
     get bulletSeparator(): string
     {
         this.firstLineUsed = true;
-        return "\n" + this.childIndentation;
+        return "\n" + this.baseIndentation;
     }
 
     get keySeparator(): string
     {
         this.firstLineUsed = true;
-        return "\n" + this.childIndentation;
+        return "\n" + this.baseIndentation;
     }
 }
 
@@ -234,24 +245,24 @@ class BulletIndentainer extends Indentainer
 
     get bulletSeparator(): string
     {
-        if (this.firstLineUsed)
+        if (!this.firstLineUsed)
         {
             this.firstLineUsed = true;
             return "";
         }
         else
-            return "\n" + this.childIndentation;
+            return "\n" + this.baseIndentation;
     }
 
     get keySeparator(): string
     {
-        if (this.firstLineUsed)
+        if (!this.firstLineUsed)
         {
             this.firstLineUsed = true;
             return "";
         }
         else
-            return "\n" + this.childIndentation;
+            return "\n" + this.baseIndentation;
     }
 }
 

@@ -90,7 +90,7 @@ export abstract class Serializer<T extends string | ArrayBufferView>
         for (const chunk of this.stream(object))
             chunks.push(chunk);
 
-        if (!chunks[0])
+        if (!chunks.length)
             return undefined;
 
         if (typeof chunks[0] === "string")
