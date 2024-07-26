@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import { JSONSerializer } from "./JSONSerializer.js";
 import { CustomizedTestClass, SimpleTestClass, TestRing, TestRingElement } from "../../test/serializationTestClasses.js";
+import { dedentBlock } from "../../test/tools.js";
 
 export class SerializeJSONStringTests
 {
@@ -136,7 +137,9 @@ export class SerializeJSONObjectTests
             " quoted key": "value3"
         };
         const result = serializer.serialize(obj);
-        assert.strictEqual(result, `{"numberKey":123,"stringKey":"Some string"," quoted key":"value3"}`);
+        assert.strictEqual(result, dedentBlock`
+            {"numberKey":123,"stringKey":"Some string"," quoted key":"value3"}
+        `);
     }
 
     emitsObjectFormatted()
@@ -151,13 +154,13 @@ export class SerializeJSONObjectTests
         };
 
         const result = serializer.serialize(obj);
-        assert.strictEqual(result,
-            `{
-    "numberKey": 123,
-    "stringKey": "Some string",
-    "boolKey": true,
-    "undef": "[const: Undefined]"
-}`);
+        assert.strictEqual(result, dedentBlock`
+        {
+            "numberKey": 123,
+            "stringKey": "Some string",
+            "boolKey": true,
+            "undef": "[const: Undefined]"
+        }`);
     }
 
     emitsObjectsWithKnownSymbols()
@@ -170,7 +173,9 @@ export class SerializeJSONObjectTests
             [symbol]: "value3"
         };
         const result = serializer.serialize(obj);
-        assert.strictEqual(result, `{"numberKey":123,"stringKey":"Some string","[sym: SymProp]":"value3"}`);
+        assert.strictEqual(result, dedentBlock`
+            {"numberKey":123,"stringKey":"Some string","[sym: SymProp]":"value3"}
+        `);
     }
 }
 
@@ -181,7 +186,9 @@ export class SerializeJSONInstanceTests
         const serializer = new JSONSerializer({ knownClasses: new Map([[SimpleTestClass, "SimpleClass"]]) });
         const instance = new SimpleTestClass();
         const result = serializer.serialize(instance);
-        assert.strictEqual(result, `{"[Type]":"SimpleClass","name":"","age":35,"isActive":false,"preferences":{"mail":"john.doe@example.com","marketing":false}}`);
+        assert.strictEqual(result, dedentBlock`
+            {"[Type]":"SimpleClass","name":"","age":35,"isActive":false,"preferences":{"mail":"john.doe@example.com","marketing":false}}
+        `);
     }
 
     emitsCustomizedClassInstance()
@@ -189,7 +196,9 @@ export class SerializeJSONInstanceTests
         const serializer = new JSONSerializer({ knownClasses: new Map([[CustomizedTestClass, "CustomizedClass"]]) });
         const instance = new CustomizedTestClass();
         const result = serializer.serialize(instance);
-        assert.strictEqual(result, `{"[Type]":"CustomizedClass","name":"","age":35,"preferences":{"mail":"john.doe@example.com","marketing":false},"isActive":false}`);
+        assert.strictEqual(result, dedentBlock`
+            {"[Type]":"CustomizedClass","name":"","age":35,"preferences":{"mail":"john.doe@example.com","marketing":false},"isActive":false}
+        `);
     }
 
     emitsCircularInstances()
@@ -201,26 +210,26 @@ export class SerializeJSONInstanceTests
         ring.add(3);
 
         const result = serializer.serialize(ring);
-        assert.strictEqual(result,
-            `{
-    "[Type]": "TestRing",
-    "entry": {
-        "[Type]": "TestRingElement",
-        "value": 1,
-        "next": {
-            "[Type]": "TestRingElement",
-            "value": 2,
-            "next": {
+        assert.strictEqual(result, dedentBlock`
+        {
+            "[Type]": "TestRing",
+            "entry": {
                 "[Type]": "TestRingElement",
-                "value": 3,
-                "next": "[ref: ~2]",
-                "previous": "[ref: ~3]"
-            },
-            "previous": "[ref: ~2]"
-        },
-        "previous": "[ref: ~4]"
-    }
-}`);
+                "value": 1,
+                "next": {
+                    "[Type]": "TestRingElement",
+                    "value": 2,
+                    "next": {
+                        "[Type]": "TestRingElement",
+                        "value": 3,
+                        "next": "[ref: ~2]",
+                        "previous": "[ref: ~3]"
+                    },
+                    "previous": "[ref: ~2]"
+                },
+                "previous": "[ref: ~4]"
+            }
+        }`);
     }
 
     emitsSelfReferencingInstances()
@@ -230,15 +239,15 @@ export class SerializeJSONInstanceTests
         ring.add(1);
 
         const result = serializer.serialize(ring);
-        assert.strictEqual(result,
-            `{
-    "[Type]": "TestRing",
-    "entry": {
-        "[Type]": "TestRingElement",
-        "value": 1,
-        "next": "[ref: ~2]",
-        "previous": "[ref: ~2]"
-    }
-}`);
+        assert.strictEqual(result, dedentBlock`
+            {
+                "[Type]": "TestRing",
+                "entry": {
+                    "[Type]": "TestRingElement",
+                    "value": 1,
+                    "next": "[ref: ~2]",
+                    "previous": "[ref: ~2]"
+                }
+            }`);
     }
 }
