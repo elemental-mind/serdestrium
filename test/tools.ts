@@ -10,7 +10,7 @@ export function dedentBlock(strings: TemplateStringsArray, ...values: any[]): st
     // Split lines and determine minimum indentation
     const lines = output.split('\n');
     
-    if(lines[0] === "")
+    if(/^\s*$/.test(lines[0]))
         lines.shift();
     if(/^\s*$/.test(lines[lines.length-1]))
         lines.pop();
@@ -25,5 +25,5 @@ export function dedentBlock(strings: TemplateStringsArray, ...values: any[]): st
     const dedentedLines = lines.map(line => line.slice(minIndent));
 
     // Join lines back together
-    return dedentedLines.join('\n').trim();
+    return dedentedLines.join('\n');
 }

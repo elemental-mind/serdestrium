@@ -3,6 +3,10 @@ import { InternalConstant, InternalConstants, SerializedType } from "../constant
 import { IEnvironment } from "../serdestrium.js";
 import { idGenerator } from "../tools/idTools.js";
 
+const YAMLSerializerConfiguration = {
+    standardIndentation: "  "
+} as const;
+
 export interface YAMLFormatting
 {
     indentation?: string;
@@ -57,7 +61,7 @@ export class YAMLSerializer extends Serializer<string>
             yield "{}";
     }
 
-    private * emitKVPair(key: symbol | string, value: any)
+    private *emitKVPair(key: symbol | string, value: any)
     {
         yield this.indentation.keySeparator;
         yield `${typeof key === "string" ? this.escapedKey(key) : this.emitSymbol(key)}: `;
@@ -66,7 +70,7 @@ export class YAMLSerializer extends Serializer<string>
         this.indentation.pop();
     }
 
-    protected * emitArray(array: any)
+    protected *emitArray(array: any)
     {
         let emittedKeys = false;
 
@@ -104,6 +108,11 @@ export class YAMLSerializer extends Serializer<string>
         }
     }
 
+    protected emitHandle(identifier: string)
+    {
+        return `&${identifier}`;
+    }
+
     protected emitReference(identifier: string): string
     {
         return `*${identifier}`;
@@ -116,7 +125,115 @@ export class YAMLSerializer extends Serializer<string>
 
     protected emitString(string: string): string
     {
-        return this.escapedString(string);
+        const lines = string.split('\n');
+
+        if (lines.length > 1)
+            return this.formatAndEscapeMultilineString(lines);
+        else
+            return this.escapeSingleLineString(string);
+    }
+
+    private formatAndEscapeMultilineString(lines: string[])
+    {
+        let multilineString = "|";
+        let expectsTrailingNewline = false;
+
+        if (lines[lines.length - 1] !== "")
+        {
+            //We check whether the last line ends with a linefeed. If not we need to omit it in parsed output.
+            // | --> |-
+            multilineString += "-";
+        }
+        else if (lines[lines.length - 1] === "" && lines[lines.length - 2] !== "")
+        {
+            //We have a trailing newline, but we do not emit it
+            lines.pop();
+            expectsTrailingNewline = true;
+        }
+        else if (lines.length >= 2 && lines[lines.length - 1] === "" && lines[lines.length - 2] === "")
+        {
+            //We had an original string with multiple line feeds at the end and need to preserve those.
+            multilineString += "+";
+            lines.pop();
+            expectsTrailingNewline = true;
+        } else if (lines[0] === "" && lines[1] === "" && lines.length === 2)
+            return `"\\n"`;
+
+        if (/^\s+/.test(lines[0]))
+        {
+            //We check whether the first line begins with whitespace, and if so, emit the indentation length after the pipe operator to avoid indentation parsing errors.
+            const indentLength = this.formatting?.indentation?.length ?? YAMLSerializerConfiguration.standardIndentation.length;
+            // | --> |2
+            multilineString += indentLength.toString();
+        }
+
+        for (const line of lines)
+            multilineString += this.indentation.multilineStringSeparator + line;
+
+        this.indentation.expectsTrailingNewline = expectsTrailingNewline;
+
+        return multilineString;
+    }
+
+    private escapeSingleLineString(input: string): string
+    {
+        const quoteType = this.getNeededQuotes(input);
+
+        switch (quoteType)
+        {
+            case "":
+                return input;
+            case "'":
+                return `'${this.escapeForSingleQuotes(input)}'`;
+            case "\"":
+                return `"${this.escapeForDoubleQuotes(input)}"`;
+        }
+    }
+
+    private getNeededQuotes(input: string): '"' | "'" | ""
+    {
+        if (
+            // Check if the input contains any double quote requiring characters
+            /['\n\r\t]/.test(input)
+        )
+            return '"';
+        else if (
+            input === "" ||
+            // Check if the input contains any special characters
+            /["\\:@#,\[\]{}?&*!|>%`\-\=]/.test(input) ||
+            // Check if string starts or ends with whitespace
+            /^\s|\s$/.test(input) ||
+            // Check if the input is a reserved YAML keyword (case-insensitive)
+            /^(null|true|false|yes|no|on|off)$/i.test(input) ||
+            // Check if the input could be mistaken for a number
+            /^[-+]?(\d+\.?\d*|\.\d+)(e[-+]?\d+)?$/i.test(input) ||
+            // Check for .NaN .Undefined .Inf -.Inf
+            /^(?:\.(?:nan|undefined|inf)|-\.inf)$/i.test(input)
+        )
+            return "'";
+        else
+            return "";
+    }
+
+    private escapeForSingleQuotes(input: string): string
+    {
+        return input.replace(/'/g, "''");
+    }
+
+    private escapeForDoubleQuotes(input: string): string
+    {
+        return input.replace(/[\\"\t\n\r]/g, char =>
+        {
+            switch (char)
+            {
+                case '\\': return '\\\\';
+                case '"': return '\\"';
+                case '\t': return '\\t';
+                case '\n': return '\\n';
+                case '\r': return '\\r';
+                default: return char;
+            }
+        });
     }
 
     protected emitBoolean(bool: boolean): string
@@ -136,45 +253,41 @@ export class YAMLSerializer extends Serializer<string>
 
     private escapedKey(key: string)
     {
-        return key.includes(" ") ? `'${key}'` : this.escapedString(key);
+        return key.includes(" ") ? `'${key}'` : this.escapeSingleLineString(key);
     }
 
-    private escapedString(string: string)
+    protected finalize(): string
     {
-        if(string === "")
-            return `''`;
-
-        switch (string.charAt(0))
-        {
-            case "t":
-            case "f":
-            case "y":
-            case "n":
-            case "o":
-                if (/^(true|false|yes|no|on|off)$/i.test(string))
-                    return `'${string}'`;
-        }
-
-        return string;
+        return this.indentation.expectsTrailingNewline ? "\n" : "";
     }
 }
 
 class Indentainer
 {
+    //We unfortunately need this property for the edge case that we emitted a literal block with trailing spaces at the very end of our object serialized value.
+    //If we do not emit a trailing newline at the very end this would be lost while parsed.
+    public expectsTrailingNewline = false;
     protected firstLineUsed = false;
     protected baseIndentation: string;
+    private previous: Indentainer;
 
     constructor(
         private serializerInstance: YAMLSerializer,
-        private previous?: Indentainer
+        previous?: Indentainer
     )
     {
-        this.baseIndentation = this.previous?.childIndentation ?? "";
+        this.previous = previous ?? this;
+        this.baseIndentation = previous?.childIndentation ?? "";
     };
+
+    protected get configuredIndentation()
+    {
+        return this.serializerInstance.formatting?.indentation ?? YAMLSerializerConfiguration.standardIndentation;
+    }
 
     get childIndentation(): string
     {
-        return this.baseIndentation + (this.serializerInstance.formatting?.indentation ?? "  ");
+        return "";
     }
 
     get objectHeaderSeparator(): string
@@ -191,7 +304,10 @@ class Indentainer
             return "";
         }
         else
+        {
+            this.expectsTrailingNewline = false;
             return "\n";
+        }
     }
 
     get bulletSeparator(): string
@@ -202,37 +318,56 @@ class Indentainer
             return "";
         }
         else
+        {
+            this.expectsTrailingNewline = false;
             return "\n";
+        }
     }
 
     get multilineStringSeparator()
     {
-        return "\n" + this.baseIndentation;
+        this.expectsTrailingNewline = false;
+        return "\n" + this.configuredIndentation;
     }
 
     public push(indentationManager: typeof BulletIndentainer | typeof KeyIndentainer)
     {
         this.serializerInstance.indentation = new indentationManager(this.serializerInstance, this.serializerInstance.indentation);
+        this.serializerInstance.indentation.expectsTrailingNewline = this.expectsTrailingNewline;
     }
 
     public pop()
     {
-        this.serializerInstance.indentation = this.previous!;
+        this.previous.expectsTrailingNewline = this.expectsTrailingNewline;
+        this.serializerInstance.indentation = this.previous;
     }
 }
 
 class KeyIndentainer extends Indentainer
 {
+    get childIndentation(): string
+    {
+        return this.baseIndentation + this.configuredIndentation;
+    }
+
     get bulletSeparator(): string
     {
         this.firstLineUsed = true;
-        return "\n" + this.baseIndentation;
+        this.expectsTrailingNewline = false;
+        return "\n" + this.childIndentation;
     }
 
     get keySeparator(): string
     {
         this.firstLineUsed = true;
-        return "\n" + this.baseIndentation;
+        this.expectsTrailingNewline = false;
+        return "\n" + this.childIndentation;
+    }
+
+    get multilineStringSeparator()
+    {
+        this.expectsTrailingNewline = false;
+        return "\n" + this.childIndentation;
     }
 }
 
@@ -251,7 +386,10 @@ class BulletIndentainer extends Indentainer
             return "";
         }
         else
-            return "\n" + this.baseIndentation;
+        {
+            this.expectsTrailingNewline = false;
+            return "\n" + this.childIndentation;
+        }
     }
 
     get keySeparator(): string
@@ -262,7 +400,16 @@ class BulletIndentainer extends Indentainer
             return "";
         }
         else
-            return "\n" + this.baseIndentation;
+        {
+            this.expectsTrailingNewline = false;
+            return "\n" + this.childIndentation;
+        }
+    }
+
+    get multilineStringSeparator()
+    {
+        this.expectsTrailingNewline = false;
+        return "\n" + this.childIndentation;
     }
 }
 

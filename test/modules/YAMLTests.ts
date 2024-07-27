@@ -4,6 +4,11 @@ import { SerializeYAMLArrayTests, SerializeYAMLBinaryTests, SerializeYAMLInstanc
 const stringTests = new SerializeYAMLStringTests();
 stringTests.emitsSimpleString();
 stringTests.escapesSpecialStrings();
+stringTests.emitsMultilineString();
+stringTests.escapesSpecialCharacters();
+stringTests.preservesLeadingAndTrailingWhitespace();
+stringTests.preservesLeadingWhitespaceInMultiline();
+stringTests.preservesTrailingNewlinesInMultiline();
 
 // SerializeYAMLNumberTests 
 const numberTests = new SerializeYAMLNumberTests();
@@ -37,11 +42,11 @@ instanceTests.emitsCircularInstances();
 instanceTests.emitsSelfReferencingInstances();
 
 // SerializeYAMLArrayTests
-const arrayTests = new SerializeYAMLArrayTests()
-arrayTests.serializesSimpleArray()
-arrayTests.serializesNestedArray()
-arrayTests.serializesEmptyArray()
-arrayTests.serializesMixedTypeArray()
+const arrayTests = new SerializeYAMLArrayTests();
+arrayTests.serializesSimpleArray();
+arrayTests.serializesNestedArray();
+arrayTests.serializesEmptyArray();
+arrayTests.serializesMixedTypeArray();
 arrayTests.serializesArrayWithCustomObjects()
 
 
