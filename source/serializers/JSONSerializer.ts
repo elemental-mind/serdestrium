@@ -95,7 +95,7 @@ export class JSONSerializer extends Serializer<string>
         if (this.whitespace)
             yield " ";
 
-        yield* this.stream(value);
+        yield* this.streamValue(value);
     }
 
     protected *emitArray(array: any)
@@ -112,7 +112,7 @@ export class JSONSerializer extends Serializer<string>
             if (this.whitespace)
                 yield this.indentString;
 
-            yield* this.stream(element);
+            yield* this.streamValue(element);
             yield ",";
 
             if (this.whitespace)
@@ -187,5 +187,10 @@ export class JSONSerializer extends Serializer<string>
     {
         if (this.whitespace)
             this.indentString = this.indentString.substring(0, this.indentString.length - this.whitespace.indentation.length);
+    }
+
+    protected finalize(): string
+    {
+        return "";
     }
 }

@@ -30,21 +30,28 @@ export abstract class Serializer<T extends string | ArrayBufferView>
     protected abstract emitBoolean(bool: boolean): T;
     protected abstract emitSymbol(symbol: symbol): T;
     protected abstract emitInternalConstant(constant: InternalConstant): T;
+    protected abstract finalize(): T;
 
-    *stream(object: any): Generator<T>
+    *stream(value: any): Generator<T>
     {
-        if (this.knownObjects.has(object))
+        yield* this.streamValue(value);
+        yield this.finalize();
+    }
+
+    *streamValue(value: any): Generator<T>
+    {
+        if (this.knownObjects.has(value))
         {
-            yield this.emitReference(this.knownObjects.get(object)!);
+            yield this.emitReference(this.knownObjects.get(value)!);
             return;
         }
 
-        if (typeof object === "object" && object !== null)
+        if (typeof value === "object" && value !== null)
         {
-            this.knownObjects.set(object, this.idProvider.next().value);
+            this.knownObjects.set(value, this.idProvider.next().value);
         }
 
-        const preformatted = this.preformat(object);
+        const preformatted = this.preformat(value);
 
         switch (typeof preformatted)
         {

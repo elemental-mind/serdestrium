@@ -62,7 +62,7 @@ export class YAMLSerializer extends Serializer<string>
         yield this.indentation.keySeparator;
         yield `${typeof key === "string" ? this.escapedKey(key) : this.emitSymbol(key)}: `;
         this.indentation.push(KeyIndentainer);
-        yield* this.stream(value);
+        yield* this.streamValue(value);
         this.indentation.pop();
     }
 
@@ -76,7 +76,7 @@ export class YAMLSerializer extends Serializer<string>
             yield this.indentation.bulletSeparator;
             yield "- ";
             this.indentation.push(BulletIndentainer);
-            yield* this.stream(element);
+            yield* this.streamValue(element);
             this.indentation.pop();
         }
 
